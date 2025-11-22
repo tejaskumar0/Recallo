@@ -16,35 +16,74 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Event, fetchEventsByUserAndFriend, fetchFriendsbyUser, Friend } from "../services/api";
 
 // --- CONFIGURATION ---
 const BACKEND_URL = "http://127.0.0.1:8000/api/v1/process_audio/"; 
+const CURRENT_USER_ID = 'cf1acd40-f837-4d01-b459-2bce15fe061a';
 
 const { width } = Dimensions.get("window");
 
 export default function CaptureScreen() {
   const router = useRouter();
-  const [person, setPerson] = useState("Coco");
-  const [eventName, setEventName] = useState("Morning Walk");
   
-  // Audio State
+  // --- Data State ---
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  
+  // --- Selection State ---
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  
+  // --- Audio State ---
   const [recording, setRecording] = useState<Audio.Recording | undefined>();
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [permissionResponse, requestPermission] = Audio.usePermissions();
   const [duration, setDuration] = useState(0);
   
-  // UI State
+  // --- UI State ---
   const [showPersonDropdown, setShowPersonDropdown] = useState(false);
   const [showEventDropdown, setShowEventDropdown] = useState(false);
 
-  // Animation Values
+  // --- Animation Values ---
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const blob1Anim = useRef(new Animated.Value(0)).current;
 
-  // Mock Data
-  const people = ["Coco", "Bella", "Max", "Luna"];
-  const events = ["Morning Walk", "Vet Visit", "Playtime", "Meal", "Training"];
+  // ============================================================
+  // 1. LOAD FRIENDS
+  // ============================================================
+  useEffect(() => {
+    const loadFriends = async () => {
+      try {
+        const data = await fetchFriendsbyUser(CURRENT_USER_ID);
+        setFriends(data);
+      } catch (error) {
+        console.error("Error loading friends:", error);
+      }
+    };
+    loadFriends();
+  }, []);
+
+  // ============================================================
+  // 2. LOAD EVENTS (Dependant on Friend Selection)
+  // ============================================================
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (selectedFriend?.id) {
+        try {
+          // Clear previous events first
+          setEvents([]); 
+          const data = await fetchEventsByUserAndFriend(CURRENT_USER_ID, selectedFriend.id);
+          setEvents(data);
+        } catch (error) {
+          console.error("Error loading events:", error);
+        }
+      }
+    };
+    loadEvents();
+  }, [selectedFriend]); // Triggers when the selected friend object changes
+
 
   // --- Audio Recording Logic ---
 
@@ -102,6 +141,11 @@ export default function CaptureScreen() {
   }
 
   async function uploadAudio(uri: string) {
+    if (!selectedFriend || !selectedEvent) {
+      Alert.alert("Wait!", "Please select a friend and an event before saving.");
+      return;
+    }
+
     setIsUploading(true);
     try {
       const formData = new FormData();
@@ -113,7 +157,12 @@ export default function CaptureScreen() {
         name: 'recording.m4a',
       });
 
-      formData.append('remarks', `Context: ${person} - ${eventName}`);
+      // Use selected object data for remarks
+      const friendName = selectedFriend.friend_name;
+      // @ts-ignore - handling generic Event type (check if your API returns .title or .name)
+      const eventTitle = selectedEvent.title || selectedEvent.event_name || "Unknown Event";
+      
+      formData.append('remarks', `Context: ${friendName} - ${eventTitle}`);
 
       console.log("Uploading to:", BACKEND_URL);
 
@@ -132,7 +181,6 @@ export default function CaptureScreen() {
 
       const result = await response.json();
       
-      // --- 🟢 LOGGING OUTPUT HERE ---
       console.log("------------------------------------------------");
       console.log("✅ MEMORY SAVED SUCCESSFULLY");
       console.log("Parsed Result:", JSON.stringify(result, null, 2));
@@ -281,24 +329,33 @@ export default function CaptureScreen() {
               <View style={[styles.iconCircle, { backgroundColor: "#FFECB3" }]}>
                 <User size={20} color="#8D6E63" />
               </View>
-              <Text style={styles.selectorText}>{person}</Text>
+              <Text style={styles.selectorText}>
+                {selectedFriend ? selectedFriend.friend_name : "Select Friend"}
+              </Text>
               <ChevronDown size={20} color="#D7CCC8" />
             </TouchableOpacity>
 
             {showPersonDropdown && (
               <View style={styles.dropdown}>
-                {people.map((p) => (
-                  <TouchableOpacity 
-                    key={p} 
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setPerson(p);
-                      setShowPersonDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownText}>{p}</Text>
-                  </TouchableOpacity>
-                ))}
+                {friends.length === 0 ? (
+                  <View style={styles.dropdownItem}>
+                    <Text style={styles.dropdownText}>No friends found</Text>
+                  </View>
+                ) : (
+                  friends.map((friend) => (
+                    <TouchableOpacity 
+                      key={friend.id} 
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSelectedFriend(friend);
+                        setSelectedEvent(null); // Reset event when friend changes
+                        setShowPersonDropdown(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownText}>{friend.friend_name}</Text>
+                    </TouchableOpacity>
+                  ))
+                )}
               </View>
             )}
           </View>
@@ -310,6 +367,10 @@ export default function CaptureScreen() {
             <TouchableOpacity 
               style={styles.selectorButton}
               onPress={() => {
+                if (!selectedFriend) {
+                  Alert.alert("Please select a friend first");
+                  return;
+                }
                 setShowEventDropdown(!showEventDropdown);
                 setShowPersonDropdown(false);
               }}
@@ -318,24 +379,36 @@ export default function CaptureScreen() {
               <View style={[styles.iconCircle, { backgroundColor: "#DCEDC8" }]}>
                 <Calendar size={20} color="#558B2F" />
               </View>
-              <Text style={styles.selectorText}>{eventName}</Text>
+              <Text style={styles.selectorText}>
+                 {/* @ts-ignore - handling title or name */}
+                {selectedEvent ? (selectedEvent.title || selectedEvent.event_name) : "Select Event"}
+              </Text>
               <ChevronDown size={20} color="#D7CCC8" />
             </TouchableOpacity>
 
             {showEventDropdown && (
               <View style={styles.dropdown}>
-                {events.map((e) => (
-                  <TouchableOpacity 
-                    key={e} 
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setEventName(e);
-                      setShowEventDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownText}>{e}</Text>
-                  </TouchableOpacity>
-                ))}
+                {events.length === 0 ? (
+                  <View style={styles.dropdownItem}>
+                    <Text style={styles.dropdownText}>
+                        {selectedFriend ? "No events found" : "Select friend first"}
+                    </Text>
+                  </View>
+                ) : (
+                  events.map((event) => (
+                    <TouchableOpacity 
+                      key={event.id} 
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSelectedEvent(event);
+                        setShowEventDropdown(false);
+                      }}
+                    >
+                      {/* @ts-ignore - handling title or name */}
+                      <Text style={styles.dropdownText}>{event.event_name}</Text>
+                    </TouchableOpacity>
+                  ))
+                )}
               </View>
             )}
           </View>
@@ -510,6 +583,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     zIndex: 100,
     overflow: "hidden",
+    maxHeight: 200,
   },
   dropdownItem: {
     padding: 16,
