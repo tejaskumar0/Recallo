@@ -108,6 +108,8 @@ function BottomNav() {
 }
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -187,6 +189,14 @@ export default function HomeScreen() {
           />
         </View>
       </ScrollView>
+
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.85}
+        onPress={() => router.push("/capture")}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
 
       <BottomNav />
     </SafeAreaView>
@@ -380,5 +390,27 @@ const styles = StyleSheet.create({
   bottomNavLabelActive: {
     color: palette.textPrimary,
     fontWeight: "800",
+  },
+  fab: {
+    position: "absolute",
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: palette.card,
+    alignItems: "center",
+    justifyContent: "center",
+    right: H_PADDING,
+    bottom: 120,
+    shadowColor: "#000",
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  fabText: {
+    color: palette.textPrimary,
+    fontSize: 28,
+    fontWeight: "800",
+    marginTop: -2,
   },
 });
