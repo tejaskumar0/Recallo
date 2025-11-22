@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    FlatList,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { fetchEventsByUserAndFriend, Event } from '../../../services/api';
 
@@ -41,6 +41,7 @@ export default function PersonEventsScreen() {
 
   useEffect(() => {
     const loadEvents = async () => {
+      console.log("working")
       if (personId) {
         const data = await fetchEventsByUserAndFriend('cf1acd40-f837-4d01-b459-2bce15fe061a', personId);
         setEvents(data);

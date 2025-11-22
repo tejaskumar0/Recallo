@@ -1,6 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Event, fetchEventsByUser } from '../../services/api';
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Event, fetchEventsByUser } from "../../services/api";
 
 const palette = {
   background: "#f2efe0ff",
@@ -28,16 +36,18 @@ export default function EventsScreen() {
   useEffect(() => {
     const loadEvents = async () => {
       // Ensure this user ID is correct or replace with dynamic ID from AuthContext
-      const data = await fetchEventsByUser('cf1acd40-f837-4d01-b459-2bce15fe061a');
+      const data = await fetchEventsByUser(
+        "cf1acd40-f837-4d01-b459-2bce15fe061a"
+      );
       setEvents(data);
     };
     loadEvents();
   }, []);
 
   const formatFriendNames = (names: string[]) => {
-    if (!names || names.length === 0) return '';
-    if (names.length <= 3) return names.join(', ');
-    const firstThree = names.slice(0, 3).join(', ');
+    if (!names || names.length === 0) return "";
+    if (names.length <= 3) return names.join(", ");
+    const firstThree = names.slice(0, 3).join(", ");
     const remaining = names.length - 3;
     return `${firstThree} + ${remaining} others`;
   };
@@ -48,22 +58,30 @@ export default function EventsScreen() {
         data={events}
         keyExtractor={(item) => item.id}
         // Adjusted paddingBottom so the last item isn't hidden behind the new Tab Bar
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: 12, paddingHorizontal: H_PADDING }}
+        contentContainerStyle={{
+          paddingBottom: 100,
+          paddingTop: 12,
+          paddingHorizontal: H_PADDING,
+        }}
         ListHeaderComponent={
           <View style={styles.headerBlock}>
             <Text style={styles.appTitle}>Events</Text>
-            <Text style={styles.appSubtitle}>
-              Your timeline of moments.
-            </Text>
+            <Text style={styles.appSubtitle}>Your timeline of moments.</Text>
           </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.eventCard} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.eventCard}
+            activeOpacity={0.85}
+            onPress={() => router.push(`/events/${item.id}`)}
+          >
             <View style={styles.eventHeaderRow}>
               <Text style={styles.eventTitle}>{item.event_name}</Text>
               <Text style={styles.eventDate}>
-                {item.event_date ? new Date(item.event_date).toLocaleDateString() : ''}
+                {item.event_date
+                  ? new Date(item.event_date).toLocaleDateString()
+                  : ""}
               </Text>
             </View>
             <Text style={styles.eventPerson}>
