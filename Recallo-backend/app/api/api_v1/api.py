@@ -1,5 +1,11 @@
 from fastapi import APIRouter
-from app.api.api_v1.endpoints import example, users, friends, events, relations, content
+from app.api.api_v1.endpoints import example
+from app.api.api_v1.endpoints import transcribe
+from app.api.api_v1.endpoints import users
+from app.api.api_v1.endpoints import friends
+from app.api.api_v1.endpoints import events
+from app.api.api_v1.endpoints import relations
+from app.api.api_v1.endpoints import content
 
 api_router = APIRouter()
 api_router.include_router(example.router, prefix="/example", tags=["example"])
@@ -8,3 +14,4 @@ api_router.include_router(friends.router, prefix="/friends", tags=["friends"])
 api_router.include_router(events.router, prefix="/events", tags=["events"])
 api_router.include_router(relations.router, prefix="/relations", tags=["relations"])
 api_router.include_router(content.router, prefix="/content", tags=["content"])
+api_router.include_router(transcribe.router, prefix="/transcribe", tags=["transcribe"])
