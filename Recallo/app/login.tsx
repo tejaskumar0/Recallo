@@ -16,9 +16,11 @@ import {
 } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,11 +34,16 @@ export default function LoginScreen() {
 
     setLoading(true);
     
-    // Simulate login delay
-    setTimeout(() => {
+    const { data, error } = await signIn(email, password);
+    
+    if (error) {
       setLoading(false);
-      router.replace("/home");
-    }, 1000);
+      Alert.alert("Login Error", error);
+      return;
+    }
+
+    setLoading(false);
+    router.replace("/home");
   };
 
   return (

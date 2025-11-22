@@ -16,9 +16,11 @@ import {
 } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { signUp } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,11 +47,20 @@ export default function SignupScreen() {
 
     setLoading(true);
     
-    // Simulate signup delay
-    setTimeout(() => {
+    const { data, error } = await signUp(email, password, { full_name: name });
+    
+    if (error) {
       setLoading(false);
-      router.replace("/home");
-    }, 1000);
+      Alert.alert("Signup Error", error);
+      return;
+    }
+
+    setLoading(false);
+    Alert.alert(
+      "Verification Email Sent",
+      "Please check your email to verify your account before logging in.",
+      [{ text: "OK", onPress: () => router.replace(`/verify-email?email=${encodeURIComponent(email)}`) }]
+    );
   };
 
   return (

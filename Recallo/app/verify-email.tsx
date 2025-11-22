@@ -9,7 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -17,9 +17,13 @@ import { supabase } from "../lib/supabase";
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { email: paramEmail } = useLocalSearchParams();
   const [resending, setResending] = useState(false);
   const [checking, setChecking] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  
+  // Use email from route params if available, otherwise fall back to user email
+  const displayEmail = paramEmail || user?.email;
 
   useEffect(() => {
     if (countdown > 0) {
@@ -61,7 +65,7 @@ export default function VerifyEmailScreen() {
     
     const { error } = await supabase.auth.resend({
       type: 'signup',
-      email: user?.email || '',
+      email: displayEmail || '',
     });
     
     setResending(false);
@@ -89,7 +93,7 @@ export default function VerifyEmailScreen() {
           We've sent a verification link to:
         </Text>
         
-        <Text style={styles.email}>{user?.email}</Text>
+        <Text style={styles.email}>{displayEmail}</Text>
 
         <Text style={styles.description}>
           Please check your inbox and click the verification link to activate your account.
