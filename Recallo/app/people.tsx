@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { colors, spacing, radius, typography } from "../constants/theme";
+import { useRouter, useSegments } from "expo-router";
+import { spacing } from "../constants/theme";
 
 const MOCK_PEOPLE = [
   { id: "1", name: "John Tan", lastSpoken: "21 Nov 2025", eventsCount: 3 },
@@ -16,24 +16,70 @@ const MOCK_PEOPLE = [
   { id: "3", name: "Michael Lee", lastSpoken: "15 Nov 2025", eventsCount: 1 },
 ];
 
+const palette = {
+  background: "#f0e9cfff",
+  card: "#fff8d8",
+  textPrimary: "#2b2100",
+  textSecondary: "#4f4a2e",
+  accent: "#fef08a",
+  border: "rgba(0, 0, 0, 0.05)",
+};
+
+const shadow = {
+  shadowColor: "#000",
+  shadowOpacity: 0.16,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 6,
+};
+
+const CARD_RADIUS = 18;
+const H_PADDING = 24;
+
+function BottomNav() {
+  const router = useRouter();
+  const segments = useSegments();
+  const currentPath = segments.length ? `/${segments.join("/")}` : "/";
+  const tabs: { key: "Home" | "People" | "Events"; path: "/" | "/people" | "/events" }[] = [
+    { key: "Home", path: "/" },
+    { key: "People", path: "/people" },
+    { key: "Events", path: "/events" },
+  ];
+
+  return (
+    <SafeAreaView style={styles.bottomNavSafeArea}>
+      <View style={styles.bottomNavWrapper}>
+        <View style={styles.bottomNav}>
+          {tabs.map((tab) => {
+            const isActive = currentPath === tab.path;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={[styles.bottomNavItem, isActive && styles.bottomNavItemActive]}
+                activeOpacity={0.85}
+                onPress={() => router.push(tab.path)}
+              >
+                <Text style={[styles.bottomNavLabel, isActive && styles.bottomNavLabelActive]}>
+                  {tab.key}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 export default function PeopleScreen() {
   const router = useRouter();
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.push("/")}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.backButtonText}>← Home</Text>
-      </TouchableOpacity>
-
       <FlatList
         data={MOCK_PEOPLE}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingTop: spacing.md }}
+        contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: 140 }}
         ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -61,6 +107,7 @@ export default function PeopleScreen() {
           </TouchableOpacity>
         )}
       />
+      <BottomNav />
     </SafeAreaView>
   );
 }
@@ -68,53 +115,76 @@ export default function PeopleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-    padding: spacing.lg,
-  },
-
-  backButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    alignSelf: "flex-start",
-    backgroundColor: "transparent",
-  },
-
-  backButtonText: {
-    fontSize: typography.body,
-    fontWeight: "600",
-    color: colors.textPrimary,
+    backgroundColor: palette.background,
+    paddingHorizontal: H_PADDING,
+    paddingVertical: spacing.lg,
   },
 
   personRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surface,
+    backgroundColor: palette.card,
     padding: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: palette.border,
+    ...shadow,
   },
   avatarCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.accentSoft,
+    backgroundColor: palette.accent,
     alignItems: "center",
     justifyContent: "center",
     marginRight: spacing.md,
   },
   avatarLetter: {
-    color: colors.accent,
+    color: palette.textPrimary,
     fontWeight: "700",
   },
   personName: {
-    color: colors.textPrimary,
-    fontSize: typography.body,
+    color: palette.textPrimary,
+    fontSize: 15,
     fontWeight: "600",
   },
   personMeta: {
-    color: colors.textSecondary,
-    fontSize: typography.small,
+    color: palette.textSecondary,
+    fontSize: 13,
     marginTop: spacing.xs,
+  },
+  bottomNavSafeArea: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  bottomNavWrapper: {
+    alignItems: "center",
+    paddingBottom: 12,
+  },
+  bottomNav: {
+    flexDirection: "row",
+    backgroundColor: "#a39f8dff",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    ...shadow,
+  },
+  bottomNavItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  bottomNavItemActive: {
+    backgroundColor: "#ffffff",
+  },
+  bottomNavLabel: {
+    color: "rgba(255, 255, 255, 0.85)",
+    fontWeight: "600",
+  },
+  bottomNavLabelActive: {
+    color: palette.textPrimary,
+    fontWeight: "800",
   },
 });

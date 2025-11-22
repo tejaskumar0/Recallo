@@ -1,8 +1,8 @@
 // constants/theme.ts
 export const colors = {
-  background: "#f2efe0ff", // light yellow from the image
+  background: "#f5f0d9ff", // light yellow from the image
   surface: "#FFFFFF",    // white for card backgrounds
-  surfaceAlt: "#f0e9ddff", // a slightly off-white for subtle variations
+  surfaceAlt: "#FDF5E6", // a slightly off-white for subtle variations
   accent: "#22c55e",     // green (kept as is, seems like a good accent)
   accentSoft: "rgba(34, 197, 94, 0.15)",
   textPrimary: "#333333", // darker text for contrast on light background
