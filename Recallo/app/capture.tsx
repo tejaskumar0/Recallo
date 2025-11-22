@@ -18,7 +18,7 @@ import { Mic, Square, ArrowLeft, User, Calendar, ChevronDown } from "lucide-reac
 import { Audio } from 'expo-av';
 
 // --- CONFIGURATION ---
-const BACKEND_URL = "http://127.0.0.1:8000/test/process_audio"; 
+const BACKEND_URL = "http://127.0.0.1:8000/api/v1/process_audio"; 
 
 const { width } = Dimensions.get("window");
 

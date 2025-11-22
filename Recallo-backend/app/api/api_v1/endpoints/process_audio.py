@@ -1,11 +1,14 @@
 import os
 import shutil
 import json
+from dotenv import load_dotenv
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from deepgram import DeepgramClient
 from anthropic import Anthropic
 
 router = APIRouter()
+
+load_dotenv()  # <- make sure this is called BEFORE you access the key
 
 deepgram_key = os.getenv("DEEPGRAM_API_KEY")
 deepgram = DeepgramClient(api_key=deepgram_key)
@@ -14,7 +17,7 @@ anthropic_key = os.getenv("ANTHROPIC_API_KEY")
 client = Anthropic(api_key=anthropic_key)
 
 
-@router.post("/process_audio")
+@router.post("/")
 async def process_audio(
     audio: UploadFile,
     remarks: str = Form(default="")

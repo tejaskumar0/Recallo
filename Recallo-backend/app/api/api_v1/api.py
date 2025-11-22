@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from app.api.api_v1.endpoints import example
-from app.api.api_v1.endpoints import transcribe
 from app.api.api_v1.endpoints import users
 from app.api.api_v1.endpoints import friends
 from app.api.api_v1.endpoints import events
