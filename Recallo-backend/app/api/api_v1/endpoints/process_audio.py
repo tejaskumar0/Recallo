@@ -29,21 +29,37 @@ async def process_audio(
         with open(temp_filename, "rb") as f:
             audio_bytes = f.read()
 
+        # --- Prepare Keyterms ---
+        # Nova-3 uses 'keyterm', not 'keywords'
+        options = {
+            "model": "nova-3",
+            "smart_format": True,
+        }
+        
+        # Only add keyterms if remarks exist
+        if remarks:
+            terms = [w for w in remarks.split() if len(w) > 4][:10]
+            if terms:
+                options["keyterm"] = terms
+
         # --- Deepgram transcription ---
         dg_response = deepgram.listen.v1.media.transcribe_file(
             request=audio_bytes,
-            model="nova-3",
-            smart_format=True,
-            keywords=[w for w in remarks.split() if len(w) > 4][:10]
+            **options
         )
+
+        # Check if transcript exists
+        if (not dg_response.results or 
+            not dg_response.results.channels or 
+            not dg_response.results.channels[0].alternatives):
+             raise HTTPException(status_code=400, detail="No transcript generated from audio")
 
         transcript = dg_response.results.channels[0].alternatives[0].transcript
 
         if not transcript:
-            raise HTTPException(status_code=400, detail="No transcript generated")
+            raise HTTPException(status_code=400, detail="Transcript was empty")
 
         # --- Claude analysis ---
-        # UPDATED: Removed "summary" from instructions and JSON schema
         system_prompt = (
             "You are a helpful assistant analyzing a transcript.\n"
             "If the transcript contains personal or sensitive information, "
@@ -55,14 +71,13 @@ async def process_audio(
             "    {\"topic\": \"string\", \"content\": \"string\"}\n"
             "  ]\n"
             "}\n"
-            "Do not include a summary. If the input cannot be safely analyzed, respond with {\"topics\": []}."
         )
 
         ai_response = client.messages.create(
             model="claude-sonnet-4-5-20250929",
             max_tokens=2000,
             temperature=0,
-            system=system_prompt, # Using the variable defined above for cleanliness
+            system=system_prompt, 
             messages=[
                 {
                     "role": "user",
@@ -71,7 +86,6 @@ async def process_audio(
             ]
         )
 
-        # If Claude refuses
         if ai_response.stop_reason == "refusal" or not ai_response.content:
             return {
                 "topics": [],
@@ -80,21 +94,19 @@ async def process_audio(
 
         raw_output = ai_response.content[0].text.strip()
 
-        # --- 1. Handle Markdown Code Blocks First ---
+        # Clean up formatting
         if "```" in raw_output:
             parts = raw_output.split("```")
             if len(parts) > 1:
                 raw_output = parts[1].strip()
 
-        # --- 2. Remove "json" prefix ---
         if raw_output.lower().startswith("json"):
             raw_output = raw_output[4:].strip()
 
-        # --- Validate JSON ---
+        # Validate JSON
         try:
             analyzed = json.loads(raw_output)
         except Exception:
-             # Fallback
              import re
              match = re.search(r"(\{.*\})", raw_output, re.DOTALL)
              if match:
@@ -105,11 +117,11 @@ async def process_audio(
                     detail=f"Claude did NOT return valid JSON. Raw output was:\n{raw_output}"
                 )
         
-        # UPDATED: Return the parsed JSON directly (which only contains "topics")
         return analyzed
 
     except Exception as e:
         print("Error:", e)
+        # Print details to console so we can see what happened in the server logs
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:

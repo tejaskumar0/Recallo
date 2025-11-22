@@ -11,10 +11,14 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Mic, Square, ArrowLeft, User, Calendar, ChevronDown } from "lucide-react-native";
 import { Audio } from 'expo-av';
+
+// --- CONFIGURATION ---
+const BACKEND_URL = "http://127.0.0.1:8000/test/process_audio"; 
 
 const { width } = Dimensions.get("window");
 
@@ -24,8 +28,9 @@ export default function CaptureScreen() {
   const [eventName, setEventName] = useState("Morning Walk");
   
   // Audio State
-  const [recording, setRecording] = useState<Audio.Recording>();
+  const [recording, setRecording] = useState<Audio.Recording | undefined>();
   const [isRecording, setIsRecording] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [permissionResponse, requestPermission] = Audio.usePermissions();
   const [duration, setDuration] = useState(0);
   
@@ -45,7 +50,6 @@ export default function CaptureScreen() {
 
   async function startRecording() {
     try {
-      // 1. Request Permission
       if (permissionResponse?.status !== 'granted') {
         const perm = await requestPermission();
         if (perm.status !== 'granted') {
@@ -54,19 +58,17 @@ export default function CaptureScreen() {
         }
       }
 
-      // 2. Prepare Audio Mode
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
-      // 3. Start Recording
       const { recording } = await Audio.Recording.createAsync( 
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
       
       setRecording(recording);
-      setIsRecording(true); // Triggers animations & timer
+      setIsRecording(true);
       console.log('Recording started');
     } catch (err) {
       console.error('Failed to start recording', err);
@@ -77,21 +79,72 @@ export default function CaptureScreen() {
   async function stopRecording() {
     if (!recording) return;
 
-    setIsRecording(false); // Stops animations & timer immediately
+    setIsRecording(false);
     
     try {
       await recording.stopAndUnloadAsync();
+      const uri = recording.getURI(); 
+      
+      setRecording(undefined);
+
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
       });
-      
-      const uri = recording.getURI(); 
-      console.log('Recording stored at', uri);
-      // You can now upload 'uri' or save it to state/storage
-      
-      setRecording(undefined);
+
+      if (uri) {
+        console.log('Recording stored at', uri);
+        await uploadAudio(uri);
+      }
+
     } catch (error) {
       console.error("Failed to stop recording", error);
+    }
+  }
+
+  async function uploadAudio(uri: string) {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      
+      // @ts-ignore
+      formData.append('audio', {
+        uri: uri,
+        type: 'audio/m4a', 
+        name: 'recording.m4a',
+      });
+
+      formData.append('remarks', `Context: ${person} - ${eventName}`);
+
+      console.log("Uploading to:", BACKEND_URL);
+
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server Error: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      // --- 🟢 LOGGING OUTPUT HERE ---
+      console.log("------------------------------------------------");
+      console.log("✅ MEMORY SAVED SUCCESSFULLY");
+      console.log("Parsed Result:", JSON.stringify(result, null, 2));
+      console.log("------------------------------------------------");
+
+      Alert.alert("Success", "Memory analyzed and saved!");
+      
+    } catch (error) {
+      console.error("Upload Failed:", error);
+      Alert.alert("Upload Failed", "Could not connect to backend.");
+    } finally {
+      setIsUploading(false);
     }
   }
 
@@ -105,7 +158,6 @@ export default function CaptureScreen() {
 
   // --- Timer & Animation Logic ---
 
-  // Timer: Syncs with isRecording state
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isRecording) {
@@ -120,7 +172,6 @@ export default function CaptureScreen() {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  // Background Blob Animations (Always running)
   useEffect(() => {
     const createBlobAnimation = (animValue: Animated.Value, duration: number) => {
       return Animated.loop(
@@ -140,7 +191,6 @@ export default function CaptureScreen() {
         ])
       );
     };
-
     createBlobAnimation(blob1Anim, 4000).start();
   }, []);
 
@@ -166,14 +216,14 @@ export default function CaptureScreen() {
     pulseAnim.stopAnimation();
   };
 
-  // Cleanup on unmount
+  // Cleanup Fix
   useEffect(() => {
     return () => {
       if (recording) {
-        recording.stopAndUnloadAsync();
+        recording.stopAndUnloadAsync().catch(() => {});
       }
     };
-  }, [recording]);
+  }, [recording]); 
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -181,7 +231,6 @@ export default function CaptureScreen() {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
-  // Interpolate Blob Movements
   const blob1TranslateY = blob1Anim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, -40],
@@ -219,8 +268,6 @@ export default function CaptureScreen() {
         
         {/* --- Context Card --- */}
         <View style={styles.card}>
-          
-          {/* Person Selector */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>WHO IS THIS FOR?</Text>
             <TouchableOpacity 
@@ -258,7 +305,6 @@ export default function CaptureScreen() {
 
           <View style={{ height: 24 }} />
 
-          {/* Event Selector */}
           <View style={[styles.inputGroup, { zIndex: -1 }]}>
             <Text style={styles.label}>WHAT&apos;S HAPPENING?</Text>
             <TouchableOpacity 
@@ -301,7 +347,7 @@ export default function CaptureScreen() {
             styles.promptText, 
             isRecording && { color: "#FF6F00" }
           ]}>
-            {isRecording ? "Listening..." : "Tap to record"}
+            {isRecording ? "Listening..." : isUploading ? "Saving..." : "Tap to record"}
           </Text>
 
           <Text style={[
@@ -312,7 +358,6 @@ export default function CaptureScreen() {
           </Text>
 
           <View style={styles.micContainer}>
-            {/* Pulse Ring */}
             <Animated.View style={[
               styles.pulseRing,
               {
@@ -327,9 +372,12 @@ export default function CaptureScreen() {
                 { backgroundColor: isRecording ? "#FF7043" : "#FFD54F" }
               ]}
               onPress={handleToggleRecording}
+              disabled={isUploading}
               activeOpacity={0.9}
             >
-              {isRecording ? (
+              {isUploading ? (
+                <ActivityIndicator color="white" size="large" />
+              ) : isRecording ? (
                 <Square fill="white" color="white" size={28} />
               ) : (
                 <Mic color="#5D4037" size={36} strokeWidth={2.5} />
@@ -396,8 +444,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 10,
   },
-  
-  // Card Styles
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 40,
@@ -410,7 +456,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 5,
     marginBottom: 40,
-    zIndex: 20, // Ensure dropdowns appear on top
+    zIndex: 20, 
   },
   inputGroup: {
     position: "relative",
@@ -475,8 +521,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#4A4036",
   },
-
-  // Recorder Styles
   recorderSection: {
     alignItems: "center",
     justifyContent: "center",
@@ -522,8 +566,6 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-
-  // Footer
   footer: {
     padding: 24,
     paddingBottom: Platform.OS === "ios" ? 10 : 24,
