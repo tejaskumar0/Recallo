@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = Field(validation_alias=AliasChoices("SUPABASE_URL", "REACT_APP_SUPABASE_URL"))
     SUPABASE_KEY: str = Field(validation_alias=AliasChoices("SUPABASE_KEY", "REACT_APP_SUPABASE_ANON_KEY"))
 
-    model_config = {"case_sensitive": True, "env_file": ".env", "extra": "ignore"}
+    class Config:
+        case_sensitive = True
+        env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
