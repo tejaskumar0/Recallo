@@ -1,7 +1,7 @@
-import { useRouter, useSegments } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { fetchFriendsbyUser, Friend } from '../services/api';
+import { fetchFriendsbyUser, Friend } from '../../services/api';
 
 const palette = {
   background: "#f2efe0ff",
@@ -23,47 +23,13 @@ const shadow = {
 const CARD_RADIUS = 18;
 const H_PADDING = 24;
 
-function BottomNav() {
-  const router = useRouter();
-  const segments = useSegments();
-  const currentPath = segments.length ? `/${segments.join("/")}` : "/";
-  const tabs: { key: "Home" | "People" | "Events"; path: "/home" | "/people" | "/events" }[] = [
-    { key: "Home", path: "/home" },
-    { key: "People", path: "/people" },
-    { key: "Events", path: "/events" },
-  ];
-
-  return (
-    <SafeAreaView style={styles.bottomNavSafeArea}>
-      <View style={styles.bottomNavWrapper}>
-        <View style={styles.bottomNav}>
-          {tabs.map((tab) => {
-            const isActive = currentPath === tab.path;
-            return (
-              <TouchableOpacity
-                key={tab.key}
-                style={[styles.bottomNavItem, isActive && styles.bottomNavItemActive]}
-                activeOpacity={0.85}
-                onPress={() => router.push(tab.path)}
-              >
-                <Text style={[styles.bottomNavLabel, isActive && styles.bottomNavLabelActive]}>
-                  {tab.key}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-export default function People() {
+export default function PeopleScreen() {
   const router = useRouter();
   const [friends, setFriends] = useState<Friend[]>([]);
 
   useEffect(() => {
     const loadFriends = async () => {
+      // Replace static ID with dynamic user ID when ready
       const data = await fetchFriendsbyUser('cf1acd40-f837-4d01-b459-2bce15fe061a');
       setFriends(data);
     };
@@ -88,15 +54,18 @@ export default function People() {
             <TouchableOpacity 
               key={friend.id} 
               style={styles.card}
-              onPress={() => router.push(`/people/${friend.id}`)}
+              // This points to app/(stack)/people/[id].tsx
+              onPress={() => router.push(`/people/${friend.id}` as any)}
               activeOpacity={0.9}
             >
               <View style={styles.avatarContainer}>
                 <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarText}>{friend.friend_name[0]}</Text>
+                  <Text style={styles.avatarText}>
+                    {friend.friend_name ? friend.friend_name[0] : '?'}
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.name}>{friend.friend_name}</Text>
+              <Text style={styles.name} numberOfLines={1}>{friend.friend_name}</Text>
               <View style={styles.stats}>
                 <Text style={styles.statText}>{friend.event_count} Events</Text>
                 {friend.last_event_date && (
@@ -109,7 +78,6 @@ export default function People() {
           ))}
         </View>
       </ScrollView>
-      <BottomNav />
     </SafeAreaView>
   );
 }
@@ -122,7 +90,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: H_PADDING,
     paddingTop: 12,
-    paddingBottom: 140,
+    // Add extra padding at bottom so content isn't hidden behind the floating tab bar
+    paddingBottom: 100,
   },
   headerBlock: {
     marginBottom: 28,
@@ -190,39 +159,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
     opacity: 0.8,
-  },
-  bottomNavSafeArea: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  bottomNavWrapper: {
-    alignItems: "center",
-    paddingBottom: 12,
-  },
-  bottomNav: {
-    flexDirection: "row",
-    backgroundColor: "#cdc4a1ff",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    ...shadow,
-  },
-  bottomNavItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  bottomNavItemActive: {
-    backgroundColor: "#ffffff",
-  },
-  bottomNavLabel: {
-    color: "rgba(255, 255, 255, 0.85)",
-    fontWeight: "600",
-  },
-  bottomNavLabelActive: {
-    color: palette.textPrimary,
-    fontWeight: "800",
   },
 });

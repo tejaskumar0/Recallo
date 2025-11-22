@@ -1,4 +1,3 @@
-// app/signup.tsx
 import { useState } from "react";
 import {
   View,
@@ -48,7 +47,8 @@ export default function SignupScreen() {
     // Simulate signup delay
     setTimeout(() => {
       setLoading(false);
-      router.replace("/home");
+      // Cast to any to avoid TS errors until routes regenerate
+      router.replace("/home" as any);
     }, 1000);
   };
 
@@ -186,7 +186,8 @@ export default function SignupScreen() {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account?</Text>
-              <Link href="/login" asChild>
+              {/* Cast href to any to avoid TS error */}
+              <Link href={"/login" as any} asChild>
                 <TouchableOpacity activeOpacity={0.7} disabled={loading}>
                   <Text style={styles.linkText}>Sign in</Text>
                 </TouchableOpacity>

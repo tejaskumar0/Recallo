@@ -1,4 +1,3 @@
-// app/verify-email.tsx
 import { useState, useEffect } from "react";
 import {
   View,
@@ -11,12 +10,12 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../lib/supabase";
+import { useAuth } from "../../contexts/AuthContext";
+import { supabase } from "../../lib/supabase";
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: { email?: string } | null };
   const [resending, setResending] = useState(false);
   const [checking, setChecking] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -44,7 +43,8 @@ export default function VerifyEmailScreen() {
       Alert.alert("Success", "Email verified successfully!", [
         {
           text: "Continue",
-          onPress: () => router.replace("/home"),
+          // Cast to any to avoid TS errors until routes regenerate
+          onPress: () => router.replace("/home" as any),
         },
       ]);
     } else {
@@ -86,7 +86,7 @@ export default function VerifyEmailScreen() {
         <Text style={styles.title}>Verify your email</Text>
         
         <Text style={styles.subtitle}>
-          We've sent a verification link to:
+          We&apos;ve sent a verification link to:
         </Text>
         
         <Text style={styles.email}>{user?.email}</Text>
@@ -98,7 +98,7 @@ export default function VerifyEmailScreen() {
         <View style={styles.infoCard}>
           <Ionicons name="information-circle" size={20} color={palette.textSecondary} />
           <Text style={styles.infoText}>
-            Didn't receive the email? Check your spam folder or request a new verification email.
+            Didn&apos;t receive the email? Check your spam folder or request a new verification email.
           </Text>
         </View>
 
@@ -113,7 +113,7 @@ export default function VerifyEmailScreen() {
           ) : (
             <>
               <Ionicons name="checkmark-circle" size={20} color={palette.textPrimary} />
-              <Text style={styles.primaryButtonText}>I've verified my email</Text>
+              <Text style={styles.primaryButtonText}>I&apos;ve verified my email</Text>
             </>
           )}
         </TouchableOpacity>
@@ -143,7 +143,8 @@ export default function VerifyEmailScreen() {
 
         <View style={styles.footer}>
           <TouchableOpacity
-            onPress={() => router.replace("/login")}
+            // Cast to any to avoid TS errors until routes regenerate
+            onPress={() => router.replace("/login" as any)}
             activeOpacity={0.7}
           >
             <Text style={styles.footerLink}>Back to login</Text>

@@ -1,30 +1,26 @@
-// app/_layout.tsx
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { colors } from "../constants/theme";
-import { AuthProvider } from "../contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { Session } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase"; // Check your path
 
 export default function RootLayout() {
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
+
   return (
-    <AuthProvider>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.textPrimary,
-          headerTitleStyle: { fontWeight: "600" },
-          contentStyle: { backgroundColor: colors.background },
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-        <Stack.Screen name="verify-email" />
-        <Stack.Screen name="home" />
-        <Stack.Screen name="people" />
-        <Stack.Screen name="events" />
-      </Stack>
-    </AuthProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+    </Stack>
   );
 }

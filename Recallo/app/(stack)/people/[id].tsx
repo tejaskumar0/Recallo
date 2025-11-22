@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { Event, fetchEventsByUserAndFriend } from "../../services/api";
+import { fetchEventsByUserAndFriend, Event } from '../../../services/api';
 
 const palette = {
   background: "#f2efe0ff",

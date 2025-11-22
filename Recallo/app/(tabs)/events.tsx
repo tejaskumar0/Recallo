@@ -1,7 +1,6 @@
-import { useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Event, fetchEventsByUser } from '../services/api';
+import { Event, fetchEventsByUser } from '../../services/api';
 
 const palette = {
   background: "#f2efe0ff",
@@ -23,46 +22,12 @@ const shadow = {
 const CARD_RADIUS = 18;
 const H_PADDING = 24;
 
-function BottomNav() {
-  const router = useRouter();
-  const segments = useSegments();
-  const currentPath = segments.length ? `/${segments.join("/")}` : "/";
-  const tabs: { key: "Home" | "People" | "Events"; path: "/home" | "/people" | "/events" }[] = [
-    { key: "Home", path: "/home" },
-    { key: "People", path: "/people" },
-    { key: "Events", path: "/events" },
-  ];
-
-  return (
-    <SafeAreaView style={styles.bottomNavSafeArea}>
-      <View style={styles.bottomNavWrapper}>
-        <View style={styles.bottomNav}>
-          {tabs.map((tab) => {
-            const isActive = currentPath === tab.path;
-            return (
-              <TouchableOpacity
-                key={tab.key}
-                style={[styles.bottomNavItem, isActive && styles.bottomNavItemActive]}
-                activeOpacity={0.85}
-                onPress={() => router.push(tab.path)}
-              >
-                <Text style={[styles.bottomNavLabel, isActive && styles.bottomNavLabelActive]}>
-                  {tab.key}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
 export default function EventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     const loadEvents = async () => {
+      // Ensure this user ID is correct or replace with dynamic ID from AuthContext
       const data = await fetchEventsByUser('cf1acd40-f837-4d01-b459-2bce15fe061a');
       setEvents(data);
     };
@@ -82,7 +47,8 @@ export default function EventsScreen() {
       <FlatList
         data={events}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 140, paddingTop: 12, paddingHorizontal: H_PADDING }}
+        // Adjusted paddingBottom so the last item isn't hidden behind the new Tab Bar
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: 12, paddingHorizontal: H_PADDING }}
         ListHeaderComponent={
           <View style={styles.headerBlock}>
             <Text style={styles.appTitle}>Events</Text>
@@ -106,7 +72,6 @@ export default function EventsScreen() {
           </TouchableOpacity>
         )}
       />
-      <BottomNav />
     </SafeAreaView>
   );
 }
@@ -157,39 +122,5 @@ const styles = StyleSheet.create({
   eventPerson: {
     color: palette.textSecondary,
     fontSize: 14,
-  },
-  bottomNavSafeArea: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  bottomNavWrapper: {
-    alignItems: "center",
-    paddingBottom: 12,
-  },
-  bottomNav: {
-    flexDirection: "row",
-    backgroundColor: "#cdc4a1ff",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    ...shadow,
-  },
-  bottomNavItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  bottomNavItemActive: {
-    backgroundColor: "#ffffff",
-  },
-  bottomNavLabel: {
-    color: "rgba(255, 255, 255, 0.85)",
-    fontWeight: "600",
-  },
-  bottomNavLabelActive: {
-    color: palette.textPrimary,
-    fontWeight: "800",
   },
 });

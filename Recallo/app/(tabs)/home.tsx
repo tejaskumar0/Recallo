@@ -1,5 +1,4 @@
-// app/home.tsx
-import { Link, useRouter, useSegments } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import {
   View,
   Text,
@@ -20,8 +19,6 @@ const MOCK_EVENTS = [
   { id: "1", title: "Lunch at NUS", person: "John Tan", date: "21 Nov 2025" },
   { id: "2", title: "Sprint planning", person: "Sarah Lim", date: "20 Nov 2025" },
 ];
-
-type TabKey = "Home" | "People" | "Events";
 
 function WeekCalendar() {
   const today = useMemo(() => new Date(), []);
@@ -70,40 +67,6 @@ function WeekCalendar() {
         );
       })}
     </View>
-  );
-}
-function BottomNav() {
-  const router = useRouter();
-  const segments = useSegments();
-  const currentPath = segments.length ? `/${segments.join("/")}` : "/";
-  const tabs: { key: TabKey; path: "/home" | "/people" | "/events" }[] = [
-    { key: "Home", path: "/home" },
-    { key: "People", path: "/people" },
-    { key: "Events", path: "/events" },
-  ];
-
-  return (
-    <SafeAreaView style={styles.bottomNavSafeArea}>
-      <View style={styles.bottomNavWrapper}>
-        <View style={styles.bottomNav}>
-          {tabs.map((tab) => {
-            const isActive = currentPath === tab.path;
-            return (
-              <TouchableOpacity
-                key={tab.key}
-                style={[styles.bottomNavItem, isActive && styles.bottomNavItemActive]}
-                activeOpacity={0.85}
-                onPress={() => router.push(tab.path)}
-              >
-                <Text style={[styles.bottomNavLabel, isActive && styles.bottomNavLabelActive]}>
-                  {tab.key}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-    </SafeAreaView>
   );
 }
 
@@ -197,8 +160,6 @@ export default function HomeScreen() {
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-
-      <BottomNav />
     </SafeAreaView>
   );
 }
@@ -357,40 +318,6 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     ...shadow,
   },
-  bottomNavSafeArea: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  bottomNavWrapper: {
-    alignItems: "center",
-    paddingBottom: 12,
-  },
-  bottomNav: {
-    flexDirection: "row",
-    backgroundColor: "#cdc4a1ff",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    ...shadow,
-  },
-  bottomNavItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  bottomNavItemActive: {
-    backgroundColor: "#ffffff",
-  },
-  bottomNavLabel: {
-    color: "rgba(255, 255, 255, 0.85)",
-    fontWeight: "600",
-  },
-  bottomNavLabelActive: {
-    color: palette.textPrimary,
-    fontWeight: "800",
-  },
   fab: {
     position: "absolute",
     width: 64,
@@ -400,7 +327,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     right: H_PADDING,
-    bottom: 120,
+    // Kept high to avoid overlapping with the floating tab bar
+    bottom: 120, 
     shadowColor: "#000",
     shadowOpacity: 0.16,
     shadowRadius: 10,
