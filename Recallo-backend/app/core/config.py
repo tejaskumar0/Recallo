@@ -9,6 +9,6 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
 
-    model_config = {"case_sensitive": True}
+    model_config = {"case_sensitive": True, "env_file": ".env"}
 
 settings = Settings()
