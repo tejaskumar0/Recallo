@@ -41,6 +41,12 @@ export const AuthProvider = ({ children }) => {
         }
       })
       if (error) throw error
+
+      // Update user state with the new user data
+      if (data?.user) {
+        setUser(data.user)
+      }
+      
       return { data, error: null }
     } catch (error) {
       return { data: null, error: error.message }

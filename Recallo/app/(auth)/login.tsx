@@ -9,38 +9,33 @@ import {
   ActivityIndicator 
 } from "react-native";
 import { useRouter, Link } from "expo-router";
-import { supabase } from "../../lib/supabase"; // Ensure this path matches your file structure
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { signIn } = useAuth() as any;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // ⚠️ CRITICAL: Do NOT put a useEffect here that checks 
-  // if (session) router.replace... 
-  // That is what causes the blinking/infinite loop.
-
-  async function signInWithEmail() {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        Alert.alert("Login Failed", error.message);
-      } else {
-        // ONLY redirect on successful action
-        router.replace("/(tabs)/home"); 
-      }
-    } catch (err) {
-      Alert.alert("Error", "An unexpected error occurred");
-    } finally {
-      setLoading(false);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
     }
-  }
+
+    setLoading(true);
+
+    const { data, error } = await signIn(email, password);
+    
+    if (error) {
+      setLoading(false);
+      Alert.alert("Login Error", error);
+      return;
+    }
+
+    setLoading(false);
+    router.replace("/home");
+  };
 
   return (
     <View style={styles.container}>
@@ -74,7 +69,7 @@ export default function LoginScreen() {
 
         <TouchableOpacity 
           style={styles.button} 
-          onPress={signInWithEmail}
+          onPress={handleLogin}
           disabled={loading}
         >
           {loading ? (
