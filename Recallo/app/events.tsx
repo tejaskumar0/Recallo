@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { colors, spacing, radius, typography } from "../constants/theme";
+import { useRouter, useSegments } from "expo-router";
+import { spacing } from "../constants/theme";
 
 const MOCK_EVENTS = [
   {
@@ -34,21 +34,68 @@ const MOCK_EVENTS = [
   },
 ];
 
-export default function EventsScreen() {
+const palette = {
+  background: "#e9dfb7ff",
+  card: "#fff8d8",
+  textPrimary: "#2b2100",
+  textSecondary: "#4f4a2e",
+  accent: "#fef08a",
+  border: "rgba(0, 0, 0, 0.05)",
+};
+
+const shadow = {
+  shadowColor: "#000",
+  shadowOpacity: 0.16,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 6,
+};
+
+const CARD_RADIUS = 18;
+const H_PADDING = 24;
+
+function BottomNav() {
   const router = useRouter();
+  const segments = useSegments();
+  const currentPath = segments.length ? `/${segments.join("/")}` : "/";
+  const tabs: { key: "Home" | "People" | "Events"; path: "/" | "/people" | "/events" }[] = [
+    { key: "Home", path: "/" },
+    { key: "People", path: "/people" },
+    { key: "Events", path: "/events" },
+  ];
+
+  return (
+    <SafeAreaView style={styles.bottomNavSafeArea}>
+      <View style={styles.bottomNavWrapper}>
+        <View style={styles.bottomNav}>
+          {tabs.map((tab) => {
+            const isActive = currentPath === tab.path;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={[styles.bottomNavItem, isActive && styles.bottomNavItemActive]}
+                activeOpacity={0.85}
+                onPress={() => router.push(tab.path)}
+              >
+                <Text style={[styles.bottomNavLabel, isActive && styles.bottomNavLabelActive]}>
+                  {tab.key}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+export default function EventsScreen() {
   return (
     <SafeAreaView style={styles.container}>
-            {/* Back Button */}
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.push("/")}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.backButtonText}>← Home</Text>
-            </TouchableOpacity>
       <FlatList
         data={MOCK_EVENTS}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 140, paddingTop: spacing.sm }}
         ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.eventCard} activeOpacity={0.85}>
@@ -67,6 +114,7 @@ export default function EventsScreen() {
           </TouchableOpacity>
         )}
       />
+      <BottomNav />
     </SafeAreaView>
   );
 }
@@ -74,27 +122,17 @@ export default function EventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-    padding: spacing.lg,
+    backgroundColor: palette.background,
+    paddingHorizontal: H_PADDING,
+    paddingVertical: spacing.lg,
   },
-    backButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    alignSelf: "flex-start",
-    backgroundColor: "transparent",
-  },
-   backButtonText: {
-    fontSize: typography.body,
-    fontWeight: "600",
-    color: colors.textPrimary,
-  },
-
   eventCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: palette.card,
+    borderRadius: CARD_RADIUS,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: palette.border,
+    ...shadow,
   },
   eventHeaderRow: {
     flexDirection: "row",
@@ -102,19 +140,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   eventTitle: {
-    color: colors.textPrimary,
-    fontSize: typography.body,
-    fontWeight: "600",
+    color: palette.textPrimary,
+    fontSize: 15,
+    fontWeight: "700",
     flex: 1,
     marginRight: spacing.sm,
   },
   eventDate: {
-    color: colors.textSecondary,
-    fontSize: typography.small,
+    color: palette.textSecondary,
+    fontSize: 13,
   },
   eventPerson: {
-    color: colors.textSecondary,
-    fontSize: typography.small,
+    color: palette.textSecondary,
+    fontSize: 13,
     marginBottom: spacing.sm,
   },
   topicRow: {
@@ -123,13 +161,48 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   topicChip: {
-    backgroundColor: colors.accentSoft,
+    backgroundColor: palette.accent,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radius.md,
+    borderRadius: CARD_RADIUS / 2,
   },
   topicText: {
-    color: colors.accent,
-    fontSize: typography.small,
+    color: palette.textPrimary,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  bottomNavSafeArea: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  bottomNavWrapper: {
+    alignItems: "center",
+    paddingBottom: 12,
+  },
+  bottomNav: {
+    flexDirection: "row",
+    backgroundColor: "#bab6a7ff",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    ...shadow,
+  },
+  bottomNavItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  bottomNavItemActive: {
+    backgroundColor: "#ffffff",
+  },
+  bottomNavLabel: {
+    color: "rgba(255, 255, 255, 0.85)",
+    fontWeight: "600",
+  },
+  bottomNavLabelActive: {
+    color: palette.textPrimary,
+    fontWeight: "800",
   },
 });
