@@ -7,6 +7,7 @@ from typing import Optional
 class UserBase(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
+    age: Optional[int] = None
 
 # Properties to receive on user update
 class UserUpdate(UserBase):
@@ -17,5 +18,4 @@ class User(UserBase):
     id: UUID
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
