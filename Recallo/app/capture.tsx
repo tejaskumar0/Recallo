@@ -1,24 +1,24 @@
+import { Audio } from 'expo-av';
 import { useRouter } from "expo-router";
-import React, { useState, useEffect, useRef } from "react";
+import { ArrowLeft, Calendar, ChevronDown, Mic, Square, User } from "lucide-react-native";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
+  ActivityIndicator,
+  Alert,
   Animated,
+  Dimensions,
   Easing,
   Platform,
   ScrollView,
-  Alert,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Mic, Square, ArrowLeft, User, Calendar, ChevronDown } from "lucide-react-native";
-import { Audio } from 'expo-av';
 
 // --- CONFIGURATION ---
-const BACKEND_URL = "http://127.0.0.1:8000/api/v1/process_audio"; 
+const BACKEND_URL = "http://127.0.0.1:8000/api/v1/process_audio/"; 
 
 const { width } = Dimensions.get("window");
 
