@@ -5,3 +5,5 @@ httpx
 pytest
 supabase
 email-validator
+deepgram-sdk
+python-multipart

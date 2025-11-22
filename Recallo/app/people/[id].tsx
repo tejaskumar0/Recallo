@@ -1,46 +1,53 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  SafeAreaView,
+    FlatList,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { colors, spacing, radius, typography } from "../../constants/theme";
+import { Event, fetchEventsByUserAndFriend } from "../../services/api";
 
-const MOCK_EVENTS = [
-  {
-    id: "e1",
-    personId: "1",
-    title: "Lunch at NUS",
-    date: "21 Nov 2025",
-    summary: "Talked about job search",
-  },
-  {
-    id: "e2",
-    personId: "1",
-    title: "Sprint planning",
-    date: "10 Nov 2025",
-    summary: "Project sync",
-  },
-  {
-    id: "e3",
-    personId: "2",
-    title: "Coffee chat",
-    date: "20 Nov 2025",
-    summary: "Catch up",
-  },
-];
+const palette = {
+  background: "#f2efe0ff",
+  card: "#f3f3d0ff",
+  textPrimary: "#2b2100",
+  textSecondary: "#4f4a2e",
+  accent: "#fef08a",
+  border: "rgba(0, 0, 0, 0.05)",
+};
+
+const shadow = {
+  shadowColor: "#000",
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 5,
+};
+
+const CARD_RADIUS = 18;
+const H_PADDING = 24;
 
 export default function PersonEventsScreen() {
   const router = useRouter();
   const { id, name } = useLocalSearchParams();
+  const [events, setEvents] = useState<Event[]>([]);
 
   const personId = Array.isArray(id) ? id[0] : id ?? "";
   const personName = Array.isArray(name) ? name[0] : name ?? "Person";
 
-  const personEvents = MOCK_EVENTS.filter((event) => event.personId === personId);
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (personId) {
+        const data = await fetchEventsByUserAndFriend('cf1acd40-f837-4d01-b459-2bce15fe061a', personId);
+        setEvents(data);
+      }
+    };
+    loadEvents();
+  }, [personId]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -51,7 +58,7 @@ export default function PersonEventsScreen() {
             onPress={() => router.back()}
             activeOpacity={0.8}
           >
-            <Text style={styles.backText}>{"<"}</Text>
+            <Ionicons name="arrow-back" size={24} color={palette.textPrimary} />
           </TouchableOpacity>
 
           <View style={styles.headerTitleContainer}>
@@ -62,18 +69,22 @@ export default function PersonEventsScreen() {
         </View>
 
         <FlatList
-          data={personEvents}
+          data={events}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
           ListEmptyComponent={
             <Text style={styles.emptyText}>No events recorded yet.</Text>
           }
           renderItem={({ item }) => (
             <View style={styles.eventCard}>
-              <Text style={styles.eventTitle}>{item.title}</Text>
-              <Text style={styles.eventMeta}>{item.date}</Text>
-              <Text style={styles.eventSummary}>{item.summary}</Text>
+              <View style={styles.eventHeaderRow}>
+                <Text style={styles.eventTitle}>{item.event_name}</Text>
+                <Text style={styles.eventDate}>
+                  {item.event_date ? new Date(item.event_date).toLocaleDateString() : ''}
+                </Text>
+              </View>
+              {/* We can show summary or other details here if available in the future */}
             </View>
           )}
         />
@@ -85,67 +96,65 @@ export default function PersonEventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: palette.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
+    paddingHorizontal: H_PADDING,
+    paddingVertical: 16,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: spacing.lg,
+    marginBottom: 24,
   },
   backButton: {
-    paddingVertical: spacing.xs,
-    paddingRight: spacing.md,
-    paddingLeft: spacing.xs,
-  },
-  backText: {
-    color: colors.textPrimary,
-    fontSize: typography.subtitle,
-    fontWeight: "700",
+    padding: 8,
+    marginLeft: -8,
   },
   headerTitleContainer: {
     flex: 1,
     alignItems: "center",
   },
   headerTitle: {
-    color: colors.textPrimary,
-    fontSize: typography.subtitle,
+    color: palette.textPrimary,
+    fontSize: 18,
     fontWeight: "700",
   },
   headerSpacer: {
-    width: spacing.lg,
+    width: 40, // Approximate width of back button to balance center title
   },
   listContent: {
-    paddingBottom: spacing.lg,
+    paddingBottom: 24,
   },
   eventCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
+    backgroundColor: palette.card,
+    borderRadius: CARD_RADIUS,
+    padding: 15,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: palette.border,
+    ...shadow,
+  },
+  eventHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
   },
   eventTitle: {
-    color: colors.textPrimary,
-    fontSize: typography.body,
+    color: palette.textPrimary,
+    fontSize: 16,
     fontWeight: "700",
-    marginBottom: spacing.xs,
+    flex: 1,
+    marginRight: 8,
   },
-  eventMeta: {
-    color: colors.textSecondary,
-    fontSize: typography.small,
-    marginBottom: spacing.xs,
-  },
-  eventSummary: {
-    color: colors.textSecondary,
-    fontSize: typography.body,
+  eventDate: {
+    color: palette.textSecondary,
+    fontSize: 13,
   },
   emptyText: {
-    color: colors.textSecondary,
-    fontSize: typography.body,
+    color: palette.textSecondary,
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 20,
   },
 });

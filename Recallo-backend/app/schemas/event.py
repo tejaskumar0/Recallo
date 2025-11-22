@@ -17,5 +17,6 @@ class EventUpdate(BaseModel):
 class Event(EventBase):
     id: UUID
     created_at: datetime
+    friend_names: Optional[list[str]] = []
 
     model_config = {"from_attributes": True}
