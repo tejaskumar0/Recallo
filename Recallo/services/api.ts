@@ -29,6 +29,20 @@ export const fetchFriendsbyUser = async (userId: string): Promise<Friend[]> => {
   }
 };
 
+export const fetchFriendsByUserAndEvent = async (userId: string, eventId: string): Promise<Friend[]> => {
+  try {
+    const response = await fetch(`${API_URL}/friends/user/${userId}/event/${eventId}`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    console.log(response)
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching friends:', error);
+    return [];
+  }
+};
+
 export const fetchEventsByUser = async (userId: string): Promise<Event[]> => {
   try {
     const response = await fetch(`${API_URL}/events/user/${userId}`);

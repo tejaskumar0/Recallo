@@ -1,4 +1,4 @@
-import { useRouter, useSegments } from 'expo-router';
+import { router, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Event, fetchEventsByUser } from '../services/api';
@@ -93,7 +93,7 @@ export default function EventsScreen() {
         }
         ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.eventCard} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.eventCard} activeOpacity={0.85} onPress={() => router.push(`/events/${item.id}`)}>
             <View style={styles.eventHeaderRow}>
               <Text style={styles.eventTitle}>{item.event_name}</Text>
               <Text style={styles.eventDate}>
