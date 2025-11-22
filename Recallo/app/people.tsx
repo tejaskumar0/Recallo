@@ -27,8 +27,8 @@ function BottomNav() {
   const router = useRouter();
   const segments = useSegments();
   const currentPath = segments.length ? `/${segments.join("/")}` : "/";
-  const tabs: { key: "Home" | "People" | "Events"; path: "/" | "/people" | "/events" }[] = [
-    { key: "Home", path: "/" },
+  const tabs: { key: "Home" | "People" | "Events"; path: "/home" | "/people" | "/events" }[] = [
+    { key: "Home", path: "/home" },
     { key: "People", path: "/people" },
     { key: "Events", path: "/events" },
   ];
