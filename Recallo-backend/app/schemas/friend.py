@@ -15,5 +15,7 @@ class FriendUpdate(BaseModel):
 class Friend(FriendBase):
     id: UUID
     created_at: datetime
+    event_count: Optional[int] = 0
+    last_event_date: Optional[datetime] = None
 
     model_config = {"from_attributes": True}

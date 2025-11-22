@@ -1,24 +1,11 @@
-// app/people.tsx
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  SafeAreaView,
-} from "react-native";
-import { useRouter, useSegments } from "expo-router";
-import { spacing } from "../constants/theme";
-
-const MOCK_PEOPLE = [
-  { id: "1", name: "John Tan", lastSpoken: "21 Nov 2025", eventsCount: 3 },
-  { id: "2", name: "Sarah Lim", lastSpoken: "20 Nov 2025", eventsCount: 2 },
-  { id: "3", name: "Michael Lee", lastSpoken: "15 Nov 2025", eventsCount: 1 },
-];
+import { useRouter, useSegments } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { fetchFriendsbyUser, Friend } from '../services/api';
 
 const palette = {
-  background: "#f0e9cfff",
-  card: "#fff8d8",
+  background: "#f2efe0ff",
+  card: "#f3f3d0ff",
   textPrimary: "#2b2100",
   textSecondary: "#4f4a2e",
   accent: "#fef08a",
@@ -27,10 +14,10 @@ const palette = {
 
 const shadow = {
   shadowColor: "#000",
-  shadowOpacity: 0.16,
+  shadowOpacity: 0.08,
   shadowRadius: 12,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 6,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 5,
 };
 
 const CARD_RADIUS = 18;
@@ -71,42 +58,57 @@ function BottomNav() {
   );
 }
 
-export default function PeopleScreen() {
+export default function People() {
   const router = useRouter();
+  const [friends, setFriends] = useState<Friend[]>([]);
+
+  useEffect(() => {
+    const loadFriends = async () => {
+      const data = await fetchFriendsbyUser('cf1acd40-f837-4d01-b459-2bce15fe061a');
+      setFriends(data);
+    };
+    loadFriends();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={MOCK_PEOPLE}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: 140 }}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.personRow}
-            activeOpacity={0.8}
-            onPress={() =>
-              router.push({
-                pathname: "/people/[id]",
-                params: { id: item.id, name: item.name },
-              })
-            }
-          >
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarLetter}>
-                {item.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.headerBlock}>
+          <Text style={styles.appTitle}>People</Text>
+          <Text style={styles.appSubtitle}>
+            Your circle of friends.
+          </Text>
+        </View>
 
-            <View style={{ flex: 1 }}>
-              <Text style={styles.personName}>{item.name}</Text>
-              <Text style={styles.personMeta}>
-                {item.eventsCount} events • last on {item.lastSpoken}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+        <View style={styles.grid}>
+          {friends.map((friend) => (
+            <TouchableOpacity 
+              key={friend.id} 
+              style={styles.card}
+              onPress={() => router.push(`/people/${friend.id}`)}
+              activeOpacity={0.9}
+            >
+              <View style={styles.avatarContainer}>
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarText}>{friend.friend_name[0]}</Text>
+                </View>
+              </View>
+              <Text style={styles.name}>{friend.friend_name}</Text>
+              <View style={styles.stats}>
+                <Text style={styles.statText}>{friend.event_count} Events</Text>
+                {friend.last_event_date && (
+                  <Text style={styles.statSubtext}>
+                    Last: {new Date(friend.last_event_date).toLocaleDateString()}
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
       <BottomNav />
     </SafeAreaView>
   );
@@ -116,42 +118,78 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: palette.background,
-    paddingHorizontal: H_PADDING,
-    paddingVertical: spacing.lg,
   },
-
-  personRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  scrollContent: {
+    paddingHorizontal: H_PADDING,
+    paddingTop: 12,
+    paddingBottom: 140,
+  },
+  headerBlock: {
+    marginBottom: 28,
+  },
+  appTitle: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: palette.textPrimary,
+    marginBottom: 8,
+  },
+  appSubtitle: {
+    fontSize: 15,
+    color: palette.textSecondary,
+    marginBottom: 16,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 15,
+  },
+  card: {
+    width: '47%',
     backgroundColor: palette.card,
-    padding: spacing.md,
     borderRadius: CARD_RADIUS,
+    padding: 15,
+    alignItems: 'center',
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: palette.border,
     ...shadow,
   },
-  avatarCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  avatarContainer: {
+    marginBottom: 10,
+  },
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: palette.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  avatarLetter: {
+  avatarText: {
     color: palette.textPrimary,
-    fontWeight: "700",
+    fontSize: 24,
+    fontWeight: '600',
   },
-  personName: {
+  name: {
     color: palette.textPrimary,
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 5,
+    textAlign: 'center',
   },
-  personMeta: {
+  stats: {
+    alignItems: 'center',
+  },
+  statText: {
     color: palette.textSecondary,
-    fontSize: 13,
-    marginTop: spacing.xs,
+    fontSize: 14,
+  },
+  statSubtext: {
+    color: palette.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
+    opacity: 0.8,
   },
   bottomNavSafeArea: {
     position: "absolute",
@@ -165,7 +203,7 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     flexDirection: "row",
-    backgroundColor: "#a39f8dff",
+    backgroundColor: "#cdc4a1ff",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 10,
