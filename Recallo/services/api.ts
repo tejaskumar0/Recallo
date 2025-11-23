@@ -101,3 +101,30 @@ export const bulkCreateContent = async (userFriendEventId: number, topics: { top
     return [];
   }
 };
+
+export const fetchUserFriendEventId = async (userId: string, friendId: string, eventId: string): Promise<string | null> => {
+  try {
+    const response = await fetch(`${API_URL}/relations/user-friends-events/${userId}/${friendId}/${eventId}`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    const data = await response.json();
+    return data.id;
+  } catch (error) {
+    console.error('Error fetching user friend event id:', error);
+    return null;
+  }
+};
+
+export const fetchContentByUserFriendEventId = async (userFriendEventId: string): Promise<Content[]> => {
+  try {
+    const response = await fetch(`${API_URL}/content/content/${userFriendEventId}`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching content:', error);
+    return [];
+  }
+};

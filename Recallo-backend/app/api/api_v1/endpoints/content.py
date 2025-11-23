@@ -18,6 +18,12 @@ def read_content(skip: int = 0, limit: int = 100):
     response = supabase.table("event_person_topics_content").select("*").range(skip, skip + limit - 1).execute()
     return response.data
 
+
+@router.get("/content/{user_friend_event_id}", response_model=List[schemas.Content])
+def read_content_by_user_friend_event(user_friend_event_id: int):
+    response = supabase.table("event_person_topics_content").select("*").eq("user_friend_event_id", user_friend_event_id).execute()
+    return response.data
+
 @router.get("/{content_id}", response_model=schemas.Content)
 def read_single_content(content_id: int):
     response = supabase.table("event_person_topics_content").select("*").eq("id", content_id).execute()
