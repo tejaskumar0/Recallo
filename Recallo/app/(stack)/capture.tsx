@@ -21,10 +21,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Event, fetchEventsByUser, fetchEventsByUserAndFriend, fetchFriendsbyUser, Friend } from "../../services/api";
-import { API_URL } from "../../config/api";
 
 // --- CONFIGURATION ---
-const API_BASE = API_URL;
+const API_BASE = "http://127.0.0.1:8000/api/v1";
 const AUDIO_PROCESS_URL = `${API_BASE}/process_audio/`; 
 const FRIENDS_URL = `${API_BASE}/friends/`;
 const EVENTS_URL = `${API_BASE}/events/`;
