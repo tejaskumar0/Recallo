@@ -146,12 +146,14 @@ const styles = StyleSheet.create({
   },
   bottomNavLabel: {
     color: "rgba(255, 255, 255, 0.85)",
-    fontWeight: "600",
+    // Removed fontWeight, applied custom font
+    fontFamily: 'Nunito-SemiBold', 
     fontSize: 14,
     textTransform: "capitalize",
   },
   bottomNavLabelActive: {
     color: palette.textPrimary,
-    fontWeight: "800",
+    // Removed fontWeight, applied custom font
+    fontFamily: 'Nunito-Bold', 
   },
 });
