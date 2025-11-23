@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { fetchEventsByUserAndFriend, Event } from '../../../services/api';
+import { Event, fetchEventsByUserAndFriend } from '../../../services/api';
 
 const palette = {
   background: "#f2efe0ff",
@@ -78,7 +78,18 @@ export default function PersonEventsScreen() {
             <Text style={styles.emptyText}>No events recorded yet.</Text>
           }
           renderItem={({ item }) => (
-            <View style={styles.eventCard}>
+            <TouchableOpacity 
+              style={styles.eventCard}
+              activeOpacity={0.85}
+              onPress={() => router.push({
+                pathname: "/content/[user]/[friend]/[event]",
+                params: { 
+                  user: 'cf1acd40-f837-4d01-b459-2bce15fe061a', // Hardcoded for now as per other files
+                  friend: personId,
+                  event: item.id 
+                }
+              })}
+            >
               <View style={styles.eventHeaderRow}>
                 <Text style={styles.eventTitle}>{item.event_name}</Text>
                 <Text style={styles.eventDate}>
@@ -86,7 +97,7 @@ export default function PersonEventsScreen() {
                 </Text>
               </View>
               {/* We can show summary or other details here if available in the future */}
-            </View>
+            </TouchableOpacity>
           )}
         />
       </View>
