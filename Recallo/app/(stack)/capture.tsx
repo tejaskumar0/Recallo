@@ -20,7 +20,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Event, fetchEventsByUserAndFriend, fetchFriendsbyUser, Friend } from "../../services/api";
+import { Event, fetchEventsByUser, fetchEventsByUserAndFriend, fetchFriendsbyUser, Friend } from "../../services/api";
 
 // --- CONFIGURATION ---
 const API_BASE = "http://127.0.0.1:8000/api/v1";
@@ -29,6 +29,8 @@ const FRIENDS_URL = `${API_BASE}/friends/`;
 const EVENTS_URL = `${API_BASE}/events/`;
 const USER_FRIENDS_URL = `${API_BASE}/relations/user-friends/`;
 const USER_EVENTS_URL = `${API_BASE}/relations/user-events/`;
+const USER_FRIENDS_EVENTS_URL = `${API_BASE}/relations/user-friends-events/`;
+
 
 const CURRENT_USER_ID = 'cf1acd40-f837-4d01-b459-2bce15fe061a';
 
@@ -75,6 +77,7 @@ export default function CaptureScreen() {
   const loadFriends = async () => {
     try {
       const data = await fetchFriendsbyUser(CURRENT_USER_ID);
+      console.log(data)
       setFriends(data);
     } catch (error) {
       console.error("Error loading friends:", error);
@@ -82,14 +85,14 @@ export default function CaptureScreen() {
   };
 
   // ============================================================
-  // 2. LOAD EVENTS (Dependant on Friend Selection)
+  // 2. LOAD EVENTS (Dependant on USER only)
   // ============================================================
   useEffect(() => {
     const loadEvents = async () => {
       if (selectedFriend?.id) {
         try {
           setEvents([]); 
-          const data = await fetchEventsByUserAndFriend(CURRENT_USER_ID, selectedFriend.id);
+          const data = await fetchEventsByUser(CURRENT_USER_ID);
           setEvents(data);
         } catch (error) {
           console.error("Error loading events:", error);
@@ -293,28 +296,20 @@ export default function CaptureScreen() {
 
     setIsUploading(true);
     try {
+      // 1. UPLOAD AUDIO
       const formData = new FormData();
-      
       // @ts-ignore
-      formData.append('audio', {
-        uri: uri,
-        type: 'audio/m4a', 
-        name: 'recording.m4a',
-      });
-
-      // Use selected object data for remarks
+      formData.append('audio', { uri: uri, type: 'audio/m4a', name: 'recording.m4a' });
+      
       const friendName = selectedFriend.friend_name;
       // @ts-ignore
       const eventTitle = selectedEvent.title || selectedEvent.event_name || "Unknown Event";
-      
       formData.append('remarks', `Context: ${friendName} - ${eventTitle}`);
 
       const response = await fetch(AUDIO_PROCESS_URL, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       if (!response.ok) {
@@ -323,7 +318,33 @@ export default function CaptureScreen() {
       }
 
       const result = await response.json();
+      console.log("Audio Processing Result:", result);
+
+      // 2. CREATE FINAL USER-FRIENDS-EVENTS RELATION
+      const finalRelationPayload = {
+        user_id: CURRENT_USER_ID,
+        friend_id: selectedFriend.id,
+        event_id: selectedEvent.id,
+        // If your schema requires the generated audio/memory ID, you would add it here 
+        // (e.g., memory_id: result.memory_id). Assuming only U/F/E IDs are needed for now.
+      };
       
+      console.log("Attempting to create final User-Friend-Event link...");
+
+      const finalRelationResponse = await fetch(USER_FRIENDS_EVENTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalRelationPayload)
+      });
+      
+      if (!finalRelationResponse.ok) {
+        console.warn("⚠️ Final Relation Link FAILED:", finalRelationResponse.status, await finalRelationResponse.text());
+        Alert.alert("Warning", "Memory saved but failed to link all three IDs (check backend logs).");
+      } else {
+        console.log("✅ Final User-Friend-Event Relation Linked!");
+      }
+      
+      // 3. NAVIGATE TO REVIEW
       router.push({
         pathname: "/review" as any,
         params: { data: JSON.stringify(result) } 
@@ -333,12 +354,11 @@ export default function CaptureScreen() {
       
     } catch (error) {
       console.error("Upload Failed:", error);
-      Alert.alert("Upload Failed", "Could not connect to backend.");
+      Alert.alert("Upload Failed", "Could not connect to backend or process data.");
     } finally {
       setIsUploading(false);
     }
   }
-
   const handleToggleRecording = () => {
     if (isRecording) {
       stopRecording();

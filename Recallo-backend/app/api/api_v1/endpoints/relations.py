@@ -56,7 +56,16 @@ def read_user_events(skip: int = 0, limit: int = 100):
 # User Friends Events
 @router.post("/user-friends-events/", response_model=schemas.UserFriendsEvent)
 def create_user_friends_event(relation: schemas.UserFriendsEventCreate):
-    response = supabase.table("user_friends_events").insert(relation.model_dump()).execute()
+    # Convert Pydantic model to a dictionary
+    relation_data = relation.model_dump()
+    
+    # Check and convert UUID objects to strings for JSON serialization
+    for key, value in relation_data.items():
+        if isinstance(value, UUID):
+            relation_data[key] = str(value)
+            
+    # Now insert the dictionary with string UUIDs
+    response = supabase.table("user_friends_events").insert(relation_data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Relation could not be created")
     return response.data[0]
