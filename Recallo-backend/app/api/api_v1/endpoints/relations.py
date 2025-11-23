@@ -74,3 +74,15 @@ def create_user_friends_event(relation: schemas.UserFriendsEventCreate):
 def read_user_friends_events(skip: int = 0, limit: int = 100):
     response = supabase.table("user_friends_events").select("*").range(skip, skip + limit - 1).execute()
     return response.data
+
+@router.get("/user-friends-events/{user_id}/{friend_id}/{event_id}", response_model=schemas.UserFriendsEvent)
+def get_user_friend_event_id(user_id: str, friend_id: str, event_id: str):
+    response = supabase.table("user_friends_events").select("*")\
+        .eq("user_id", user_id)\
+        .eq("friend_id", friend_id)\
+        .eq("event_id", event_id)\
+        .execute()
+    
+    if not response.data:
+        raise HTTPException(status_code=404, detail="User Friend Event relation not found")
+    return response.data[0]
