@@ -142,7 +142,7 @@ export default function HomeScreen() {
               <Users size={30} color={palette.textPrimary} style={styles.actionIcon} />
               <View style={styles.actionTextContainer}>
                 <Text style={styles.actionTitle}>View Friends</Text> 
-                <Text style={styles.actionSubtitle}>See profiles, pets, and key relationships.</Text> 
+                <Text style={styles.actionSubtitle}>See profiles and key relationships.</Text> 
               </View>
             </TouchableOpacity>
           </Link>
