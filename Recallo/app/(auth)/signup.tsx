@@ -17,6 +17,18 @@ import { Link, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../contexts/AuthContext";
 
+// Define the palette outside the component for clean access
+const palette = {
+  background: "#f2efe0ff",
+  card: "#f3f3d0ff", // Used for input background/card
+  textPrimary: "#2b2100", // Dark brown for primary text
+  textSecondary: "#4f4a2e", // Lighter brown for secondary text/labels
+  accent: "#fef08a", // Bright yellow (unused here, but defined)
+  border: "rgba(0, 0, 0, 0.05)",
+  buttonPrimary: "#2b2100", // Dark brown for button background
+  buttonText: "#f2efe0ff", // Light cream for button text
+};
+
 export default function SignupScreen() {
   const router = useRouter();
   const { signUp } = useAuth() as any;
@@ -63,11 +75,27 @@ export default function SignupScreen() {
     );
   };
 
+  // Helper component for the Eye icon, wrapped in a Pressable
+  const EyeToggle = ({ visible, onPress, disabled }: { visible: boolean, onPress: () => void, disabled: boolean }) => (
+    <Pressable
+      style={styles.eyeIcon}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Ionicons
+        name={visible ? "eye" : "eye-off"}
+        size={24} // Slightly larger icon
+        color={palette.textSecondary + '80'}
+      />
+    </Pressable>
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -75,99 +103,101 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Create account</Text>
+            <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>
               Join Recallo to start capturing your conversations
             </Text>
           </View>
 
           <View style={styles.formContainer}>
-            <View style={styles.inputWrapper}>
+            {/* Name Input */}
+            <View style={styles.inputGroup}>
               <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your name"
-                placeholderTextColor={palette.textSecondary}
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                autoCorrect={false}
-                editable={!loading}
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your name"
+                  placeholderTextColor={palette.textSecondary + '80'}
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+              </View>
             </View>
 
-            <View style={styles.inputWrapper}>
+            {/* Email Input */}
+            <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor={palette.textSecondary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor={palette.textSecondary + '80'}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="emailAddress"
+                  editable={!loading}
+                />
+              </View>
             </View>
 
-            <View style={styles.inputWrapper}>
+            {/* Password Input */}
+            <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
-              <View style={styles.passwordContainer}>
+              <View style={[styles.inputWrapper, styles.passwordContainer]}>
                 <TextInput
                   style={styles.passwordInput}
                   placeholder="Create a password"
-                  placeholderTextColor={palette.textSecondary}
+                  placeholderTextColor={palette.textSecondary + '80'}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  textContentType="newPassword"
                   editable={!loading}
                 />
-                <Pressable
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                  disabled={loading}
-                >
-                  <Ionicons
-                    name={showPassword ? "eye" : "eye-off"}
-                    size={22}
-                    color={palette.textSecondary}
-                  />
-                </Pressable>
+                <EyeToggle
+                    visible={showPassword}
+                    onPress={() => setShowPassword(!showPassword)}
+                    disabled={loading}
+                />
               </View>
               <Text style={styles.hint}>Minimum 6 characters</Text>
             </View>
 
-            <View style={styles.inputWrapper}>
+            {/* Confirm Password Input */}
+            <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm Password</Text>
-              <View style={styles.passwordContainer}>
+              <View style={[styles.inputWrapper, styles.passwordContainer]}>
                 <TextInput
                   style={styles.passwordInput}
                   placeholder="Re-enter your password"
-                  placeholderTextColor={palette.textSecondary}
+                  placeholderTextColor={palette.textSecondary + '80'}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry={!showConfirmPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  textContentType="newPassword"
                   editable={!loading}
                 />
-                <Pressable
-                  style={styles.eyeIcon}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={loading}
-                >
-                  <Ionicons
-                    name={showConfirmPassword ? "eye" : "eye-off"}
-                    size={22}
-                    color={palette.textSecondary}
-                  />
-                </Pressable>
+                <EyeToggle
+                    visible={showConfirmPassword}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={loading}
+                />
               </View>
             </View>
-
+          </View>
+          
+          {/* Terms and Button */}
+          <View style={styles.bottomSection}>
             <View style={styles.termsContainer}>
               <Text style={styles.termsText}>
                 By signing up, you agree to our{" "}
@@ -183,21 +213,14 @@ export default function SignupScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color={palette.textPrimary} />
+                <ActivityIndicator color={palette.buttonText} />
               ) : (
                 <Text style={styles.primaryButtonText}>Create Account</Text>
               )}
             </TouchableOpacity>
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account?</Text>
-              {/* Cast href to any to avoid TS error */}
               <Link href={"/login" as any} asChild>
                 <TouchableOpacity activeOpacity={0.7} disabled={loading}>
                   <Text style={styles.linkText}>Sign in</Text>
@@ -211,26 +234,8 @@ export default function SignupScreen() {
   );
 }
 
-const palette = {
-  background: "#f2efe0ff",
-  card: "#f3f3d0ff",
-  textPrimary: "#2b2100",
-  textSecondary: "#4f4a2e",
-  accent: "#fef08a",
-  border: "rgba(0, 0, 0, 0.05)",
-  inputBg: "rgba(255, 255, 255, 0.5)",
-};
-
-const shadow = {
-  shadowColor: "#000",
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 5,
-};
-
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: palette.background,
   },
@@ -239,128 +244,136 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 30, // Increased padding to match LoginScreen
     paddingTop: 60,
     paddingBottom: 40,
   },
   header: {
-    marginBottom: 40,
+    marginBottom: 50, // Increased margin for spacing
   },
   title: {
-    fontSize: 34,
-    fontWeight: "800",
+    fontSize: 40, // Match LoginScreen title size
+    fontFamily: 'Nunito-ExtraBold', // Applied specific font family
     color: palette.textPrimary,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 16,
+    fontFamily: 'Nunito-Regular', // Applied specific font family
     color: palette.textSecondary,
     lineHeight: 22,
+    textAlign: 'center',
   },
   formContainer: {
-    flex: 1,
+    flexShrink: 0, // Ensure it doesn't take up full vertical space unnecessarily
   },
-  inputWrapper: {
-    marginBottom: 20,
+  bottomSection: {
+    marginTop: 20,
+    flexShrink: 0,
+  },
+  inputGroup: {
+    marginBottom: 25, // Increased spacing between input groups
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 16, // Match LoginScreen label size
+    fontFamily: 'Nunito-Bold', // Applied specific font family
     color: palette.textPrimary,
     marginBottom: 8,
+    marginLeft: 10,
+  },
+  inputWrapper: {
+    backgroundColor: palette.card, // Card color for input background
+    borderRadius: 20, // More rounded corners
+    shadowColor: palette.textPrimary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, 
+    shadowRadius: 2,
+    elevation: 1,
+    paddingHorizontal: 10, // Padding for better text alignment inside the wrapper
+    height: 58,
   },
   input: {
-    backgroundColor: palette.inputBg,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
+    flex: 1,
+    backgroundColor: 'transparent',
+    fontSize: 18,
+    fontFamily: 'Nunito-Regular', // Applied specific font family
     color: palette.textPrimary,
-    borderWidth: 1,
-    borderColor: palette.border,
+    paddingHorizontal: 10,
   },
   passwordContainer: {
     position: "relative",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   passwordInput: {
-    backgroundColor: palette.inputBg,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    paddingRight: 50,
-    fontSize: 15,
+    flex: 1,
+    backgroundColor: 'transparent',
+    fontSize: 18,
+    fontFamily: 'Nunito-Regular', // Applied specific font family
     color: palette.textPrimary,
-    borderWidth: 1,
-    borderColor: palette.border,
+    paddingHorizontal: 10,
+    height: 58,
   },
   eyeIcon: {
-    position: "absolute",
-    right: 16,
-    top: "50%",
-    transform: [{ translateY: -11 }],
+    paddingHorizontal: 10,
   },
   hint: {
-    fontSize: 12,
+    fontSize: 14, // Slightly larger hint text
+    fontFamily: 'Nunito-Regular', // Applied specific font family
     color: palette.textSecondary,
     marginTop: 6,
+    marginLeft: 10,
   },
   termsContainer: {
-    marginBottom: 24,
+    marginBottom: 30,
   },
   termsText: {
-    fontSize: 13,
+    fontSize: 14,
+    fontFamily: 'Nunito-Regular', // Applied specific font family
     color: palette.textSecondary,
-    lineHeight: 18,
+    lineHeight: 20,
     textAlign: "center",
   },
   termsLink: {
     color: palette.textPrimary,
-    fontWeight: "600",
+    fontFamily: 'Nunito-Bold', // Applied specific font family
   },
   primaryButton: {
-    backgroundColor: palette.card,
-    borderRadius: 999,
+    backgroundColor: palette.buttonPrimary, // Dark brown primary button
+    borderRadius: 30, // Fully rounded
     paddingVertical: 16,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: palette.border,
-    ...shadow,
+    marginBottom: 40,
+    // Stronger shadow for the main CTA
+    shadowColor: palette.buttonPrimary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
   },
   disabledButton: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   primaryButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: palette.textPrimary,
+    fontSize: 20,
+    fontFamily: 'Nunito-ExtraBold', // Applied specific font family
+    color: palette.buttonText, // Light cream text
   },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 32,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: palette.border,
-  },
-  dividerText: {
-    paddingHorizontal: 16,
-    fontSize: 13,
-    color: palette.textSecondary,
-  },
+  // Removed divider styles as they are not used in the final button section
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     gap: 6,
   },
   footerText: {
-    fontSize: 14,
+    fontSize: 16,
+    fontFamily: 'Nunito-Regular', // Applied specific font family
     color: palette.textSecondary,
   },
   linkText: {
-    fontSize: 14,
+    fontSize: 16,
+    fontFamily: 'Nunito-Bold', // Applied specific font family
     color: palette.textPrimary,
-    fontWeight: "700",
   },
 });
