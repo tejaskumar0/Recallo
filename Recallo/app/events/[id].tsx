@@ -80,9 +80,20 @@ export default function EventDetailsScreen() {
           <View style={styles.peopleContainer}>
             {friends && friends.length > 0 ? (
               friends.map((friend, index) => (
-                <View key={index} style={styles.personChip}>
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.personChip}
+                  onPress={() => router.push({
+                    pathname: "/content/[user]/[friend]/[event]",
+                    params: {
+                      user: 'cf1acd40-f837-4d01-b459-2bce15fe061a', // Hardcoded for now
+                      friend: friend.id,
+                      event: eventId
+                    }
+                  })}
+                >
                   <Text style={styles.personName}>{friend.friend_name}</Text>
-                </View>
+                </TouchableOpacity>
               ))
             ) : (
               <Text style={styles.emptyText}>No people associated with this event.</Text>
