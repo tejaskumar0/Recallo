@@ -1,5 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
     SafeAreaView,
@@ -10,26 +9,32 @@ import {
     View,
 } from "react-native";
 import { Content, fetchContentByUserFriendEventId, fetchUserFriendEventId } from "../../../../services/api";
+import { ArrowLeft } from 'lucide-react-native'; // Using Lucide icon for consistency
 
+// --- CONSTANTS ---
 const palette = {
   background: "#f2efe0ff",
-  card: "#f3f3d0ff",
+  // UI IMPROVEMENT: Changed card color to pure white
+  card: "#FFFFFF", 
   textPrimary: "#2b2100",
   textSecondary: "#4f4a2e",
   accent: "#fef08a",
-  border: "rgba(0, 0, 0, 0.05)",
+  // UI IMPROVEMENT: Darker border for contrast
+  border: "rgba(0, 0, 0, 0.08)", 
 };
 
 const shadow = {
+  // UI IMPROVEMENT: Consistent shadow definition
   shadowColor: "#000",
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 5,
+  shadowOpacity: 0.1, 
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 4,
 };
 
-const CARD_RADIUS = 18;
+const CARD_RADIUS = 20; // UI IMPROVEMENT: Larger radius
 const H_PADDING = 24;
+// --- END CONSTANTS ---
 
 export default function ContentDetailsScreen() {
   const router = useRouter();
@@ -65,7 +70,8 @@ export default function ContentDetailsScreen() {
             onPress={() => router.back()}
             activeOpacity={0.8}
           >
-            <Ionicons name="arrow-back" size={24} color={palette.textPrimary} />
+            {/* UI IMPROVEMENT: Using Lucide icon for consistency */}
+            <ArrowLeft size={24} color="#4A4036" />
           </TouchableOpacity>
           
           <View style={styles.headerTitleContainer}>
@@ -84,7 +90,7 @@ export default function ContentDetailsScreen() {
               </View>
             ))
           ) : (
-            <Text style={styles.emptyText}>No content available.</Text>
+            <Text style={styles.emptyText}>No content available for this memory.</Text>
           )}
         </View>
       </ScrollView>
@@ -99,15 +105,28 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: H_PADDING,
+    paddingTop: 0, 
     paddingVertical: 16,
   },
+  
+  // --- HEADER STYLES ---
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    // UI IMPROVEMENT: Reduced margin below header
+    marginBottom: 16,
+    paddingTop: 16, // Added top padding
   },
   backButton: {
-    padding: 8,
+    // UI IMPROVEMENT: Consistent back button style
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#F0EAD6",
     marginLeft: -8,
   },
   headerTitleContainer: {
@@ -116,36 +135,47 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: palette.textPrimary,
-    fontSize: 18,
-    fontWeight: "700",
+    // FONT CHANGE: Hardcoded 'Nunito-ExtraBold' (was 700)
+    fontFamily: 'Nunito-ExtraBold',
+    fontSize: 24, // UI IMPROVEMENT: Larger title
   },
   headerSpacer: {
     width: 40,
   },
+  
+  // --- LIST & CARD STYLES ---
   listContainer: {
-    gap: 16,
+    gap: 12, // UI IMPROVEMENT: Tighter gap between cards
+    paddingTop: 12, // Space after the subtitle/header row
   },
   card: {
-    backgroundColor: palette.card,
+    backgroundColor: palette.card, // UI IMPROVEMENT: Now #FFFFFF
     borderRadius: CARD_RADIUS,
     padding: 20,
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: palette.border, // UI IMPROVEMENT: Darker border
     ...shadow,
   },
   topicTitle: {
     color: palette.textPrimary,
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was 700)
+    fontFamily: 'Nunito-Bold',
     fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 8,
+    marginBottom: 6, // UI IMPROVEMENT: Reduced space
   },
   topicContent: {
     color: palette.textSecondary,
+    // FONT CHANGE: Hardcoded 'Nunito-Regular' (was default)
+    fontFamily: 'Nunito-Regular',
     fontSize: 16,
     lineHeight: 24,
   },
+  
+  // --- EMPTY STATE ---
   emptyText: {
     color: palette.textSecondary,
+    // FONT CHANGE: Hardcoded 'Nunito-Regular' (was default)
+    fontFamily: 'Nunito-Regular',
     fontSize: 16,
     textAlign: "center",
     marginTop: 40,

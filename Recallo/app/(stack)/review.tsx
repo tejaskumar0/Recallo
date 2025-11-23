@@ -100,7 +100,6 @@ export default function ReviewScreen() {
       }
       
       // Call the bulk creation API
-      // NOTE: bulkCreateContent logic includes its own error handling/Alerts
       const createdContents = await bulkCreateContent(userFriendEventId, contentToSave);
 
       if (createdContents.length > 0) {
@@ -215,8 +214,19 @@ export default function ReviewScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FDFCF4" },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, paddingVertical: 16 },
-  backButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#F0EAD6" },
-  headerTitle: { fontSize: 20, fontWeight: "800", color: "#4A4036" },
+  backButton: { 
+    width: 48, height: 48, borderRadius: 24, 
+    backgroundColor: "#FFFFFF", 
+    alignItems: "center", justifyContent: "center", 
+    borderWidth: 2, 
+    borderColor: "#F0EAD6" 
+  },
+  headerTitle: { 
+    fontSize: 20, 
+    // FONT CHANGE: Hardcoded 'Nunito-ExtraBold' (was 800)
+    fontFamily: 'Nunito-ExtraBold', 
+    color: "#4A4036" 
+  },
   
   scrollContent: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 40 },
   
@@ -252,7 +262,8 @@ const styles = StyleSheet.create({
   topicInput: {
     flex: 1,
     fontSize: 18,
-    fontWeight: "700",
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was 700)
+    fontFamily: 'Nunito-Bold', 
     color: "#5D4037",
   },
   deleteButton: {
@@ -272,13 +283,16 @@ const styles = StyleSheet.create({
   },
   bodyLabel: {
     fontSize: 10,
-    fontWeight: "800",
+    // FONT CHANGE: Hardcoded 'Nunito-ExtraBold' (was 800)
+    fontFamily: 'Nunito-ExtraBold', 
     color: "#9C9480",
     letterSpacing: 1.2,
   },
   contentInput: {
     fontSize: 16,
     lineHeight: 24,
+    // FONT CHANGE: Hardcoded 'Nunito-Regular' (was default)
+    fontFamily: 'Nunito-Regular', 
     color: "#4A4036",
     minHeight: 80,
     textAlignVertical: "top",
@@ -299,13 +313,34 @@ const styles = StyleSheet.create({
   addButtonText: {
     marginLeft: 8,
     fontSize: 16,
-    fontWeight: "600",
+    // FONT CHANGE: Hardcoded 'Nunito-SemiBold' (was 600)
+    fontFamily: 'Nunito-SemiBold', 
     color: "#8D6E63",
   },
 
   // --- FOOTER ---
   footer: { padding: 24, backgroundColor: "#FDFCF4" },
-  saveButton: { flexDirection: "row", backgroundColor: "#4A4036", height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", gap: 12 },
-  saveButtonText: { color: "#FFF8E1", fontSize: 20, fontWeight: "bold" },
-  checkIcon: { backgroundColor: "#FFD54F", width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  saveButton: { 
+    flexDirection: "row", 
+    backgroundColor: "#4A4036", 
+    height: 64, 
+    borderRadius: 32, 
+    alignItems: "center", 
+    justifyContent: "center", 
+    gap: 12 
+  },
+  saveButtonText: { 
+    color: "#FFF8E1", 
+    fontSize: 20, 
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was bold)
+    fontFamily: 'Nunito-Bold', 
+  },
+  checkIcon: { 
+    backgroundColor: "#FFD54F", 
+    width: 28, 
+    height: 28, 
+    borderRadius: 14, 
+    alignItems: "center", 
+    justifyContent: "center" 
+  },
 });

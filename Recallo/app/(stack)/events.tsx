@@ -17,26 +17,30 @@ import { ArrowLeft } from 'lucide-react-native';
 // --- CONSTANTS ---
 const palette = {
   background: "#f2efe0ff",
-  card: "#f3f3d0ff",
+  // UI IMPROVEMENT: Changed card color to pure white for consistency
+  card: "#FFFFFF", 
   textPrimary: "#2b2100",
   textSecondary: "#4f4a2e",
   accent: "#fef08a",
-  border: "rgba(0, 0, 0, 0.05)",
+  // UI IMPROVEMENT: Slightly darker border for better contrast on white cards
+  border: "rgba(0, 0, 0, 0.08)", 
 };
 
 const shadow = {
   shadowColor: "#000",
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 5,
+  // UI IMPROVEMENT: Increased shadow definition
+  shadowOpacity: 0.1, 
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 4,
 };
 
-const CARD_RADIUS = 18;
+const CARD_RADIUS = 20; // UI IMPROVEMENT: Slightly larger radius for softer look
 const H_PADDING = 24;
 // --- END CONSTANTS ---
 
 // --- FONT MAPPING (Used internally to translate weights to names) ---
+// Kept for reference but not used in styles
 const getFontFamily = (weight: string | number): string => {
   switch (String(weight)) {
     case '600':
@@ -103,15 +107,14 @@ export default function EventsScreen() {
       <FlatList
         data={events}
         keyExtractor={(item) => item.id}
-        // Adjusted paddingBottom so the last item isn't hidden behind the new Tab Bar
         contentContainerStyle={styles.scrollContent}
         ListHeaderComponent={
           <View style={styles.headerBlock}>
-            {/* The appTitle was removed, but the subtitle needs to be wrapped */}
             <Text style={styles.appSubtitle}>Your timeline of moments.</Text>
           </View>
         }
-        ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
+        // UI IMPROVEMENT: Slightly larger gap between list items
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />} 
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.eventCard}
@@ -148,7 +151,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.background,
   },
   
-  // --- HEADER STYLES (Copied from PeopleScreen) ---
+  // --- HEADER STYLES ---
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     zIndex: 10,
-    backgroundColor: palette.background, // Match screen background
+    backgroundColor: palette.background,
   },
   backButton: {
     width: 48,
@@ -175,7 +178,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    // FONT CHANGE: Replaced fontWeight: "800"
     fontFamily: 'Nunito-ExtraBold', 
     color: "#4A4036", 
     letterSpacing: -0.5,
@@ -184,77 +186,84 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingBottom: 100,
-    paddingTop: 12,
+    // UI IMPROVEMENT: Removed vertical padding from here
+    paddingTop: 0, 
     paddingHorizontal: H_PADDING,
   },
 
   headerBlock: {
-    marginBottom: 20,
+    // UI IMPROVEMENT: Reduced top margin
+    marginBottom: 16, 
+    // UI IMPROVEMENT: Added padding to control space to header
+    paddingTop: 12, 
   },
   appTitle: {
-    display: 'none', // Hidden, replaced by headerTitle
+    display: 'none',
   },
   appSubtitle: {
     fontSize: 15,
-    // FONT CHANGE: Replaced default/no fontWeight (assumed Regular)
     fontFamily: 'Nunito-Regular', 
     color: palette.textSecondary,
-    marginBottom: 16,
-    paddingTop: 8,
+    // UI IMPROVEMENT: Reduced bottom margin
+    marginBottom: 8,
   },
   eventCard: {
-    backgroundColor: palette.card,
+    backgroundColor: palette.card, // UI IMPROVEMENT: Now #FFFFFF
     borderRadius: CARD_RADIUS,
-    padding: 15,
+    // UI IMPROVEMENT: Increased internal padding
+    padding: 20, 
     borderWidth: 1,
-    borderColor: palette.border,
-    ...shadow,
+    borderColor: palette.border, // UI IMPROVEMENT: Now darker border
+    ...shadow, // UI IMPROVEMENT: Stronger shadow
   },
   eventHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    // UI IMPROVEMENT: Reduced vertical space
+    marginBottom: 6, 
   },
   eventTitle: {
     color: palette.textPrimary,
-    fontSize: 16,
-    // FONT CHANGE: Replaced fontWeight: "700"
-    fontFamily: 'Nunito-Bold', 
+    // UI IMPROVEMENT: Larger, bolder title
+    fontSize: 18, 
+    fontFamily: 'Nunito-ExtraBold', 
     flex: 1,
-    marginRight: 8,
+    marginRight: 10,
   },
   eventDate: {
     color: palette.textSecondary,
-    fontSize: 13,
-    // FONT CHANGE: Replaced default/no fontWeight (assumed Regular)
+    // UI IMPROVEMENT: Slightly smaller date text
+    fontSize: 12, 
     fontFamily: 'Nunito-Regular', 
+    alignSelf: 'flex-start',
+    paddingTop: 4,
   },
   eventPerson: {
     color: palette.textSecondary,
     fontSize: 14,
-    // FONT CHANGE: Replaced default/no fontWeight (assumed Regular)
     fontFamily: 'Nunito-Regular', 
+    // UI IMPROVEMENT: Tighter line height
+    lineHeight: 20,
   },
   emptyContainer: {
     padding: 30,
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: palette.card, // Use white card color
     borderRadius: CARD_RADIUS,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: palette.border,
   },
   emptyText: {
     fontSize: 16,
-    // FONT CHANGE: Replaced fontWeight: "700"
     fontFamily: 'Nunito-Bold', 
     color: palette.textPrimary,
     marginBottom: 5,
   },
   emptySubText: {
     fontSize: 14,
-    // FONT CHANGE: Replaced default/no fontWeight (assumed Regular)
     fontFamily: 'Nunito-Regular', 
     color: palette.textSecondary,
+    textAlign: 'center',
   },
 });

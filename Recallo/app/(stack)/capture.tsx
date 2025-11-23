@@ -31,23 +31,7 @@ const USER_FRIENDS_URL = `${API_BASE}/relations/user-friends/`;
 const USER_EVENTS_URL = `${API_BASE}/relations/user-events/`;
 const USER_FRIENDS_EVENTS_URL = `${API_BASE}/relations/user-friends-events/`;
 
-// --- FONT MAPPING ---
-// Map numeric font weights to your Nunito asset names
-const getFontFamily = (weight: string | number): string => {
-  switch (String(weight)) {
-    case '600':
-      return 'Nunito-SemiBold';
-    case '700':
-    case 'bold':
-      return 'Nunito-Bold';
-    case '800':
-    case '900':
-      return 'Nunito-ExtraBold';
-    default:
-      return 'Nunito-Regular';
-  }
-};
-// --- END FONT MAPPING ---
+// NOTE: The getFontFamily helper function and font mapping have been removed as requested.
 
 
 export default function CaptureScreen() {
@@ -237,10 +221,6 @@ export default function CaptureScreen() {
       setEvents(prev => [newEvent, ...prev]);
       setSelectedEvent(newEvent);
       
-      // Close modal
-      setIsEventModalVisible(false);
-      setNewEventName("");
-      
     } catch (error: any) {
       Alert.alert("Error", error.message || "Could not create event.");
       console.error(error);
@@ -323,7 +303,12 @@ export default function CaptureScreen() {
       const friendName = selectedFriend.friend_name;
       // @ts-ignore
       const eventTitle = selectedEvent.title || selectedEvent.event_name || "Unknown Event";
-      formData.append('remarks', `Context: ${friendName} - ${eventTitle}`);
+      
+      // --- FIX: Pass friend_name separately for the AI to use it in the prompt ---
+      formData.append('friend_name', friendName); 
+      // remarks can still be used for keyterms if needed
+      formData.append('remarks', `Context: ${friendName} - ${eventTitle}`); 
+      // --------------------------------------------------------------------------
 
       const response = await fetch(AUDIO_PROCESS_URL, {
         method: 'POST',
@@ -507,6 +492,11 @@ export default function CaptureScreen() {
       </KeyboardAvoidingView>
     </Modal>
   );
+  
+  // UI IMPROVEMENT: Determine dynamic header title
+  const headerTitleText = selectedFriend 
+    ? `New Memory with ${selectedFriend.friend_name}` 
+    : "New Memory";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -532,7 +522,10 @@ export default function CaptureScreen() {
         >
           <ArrowLeft size={24} color="#4A4036" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>New Memory</Text>
+        {/* UI IMPROVEMENT: Use dynamic header title */}
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {headerTitleText}
+        </Text>
         <View style={{ width: 48 }} /> 
       </View>
 
@@ -782,8 +775,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    // FONT CHANGE: Replaced fontFamily: "Nunito-Bold" 
-    fontFamily: getFontFamily(700), 
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was 700)
+    fontFamily: 'Nunito-Bold', 
     color: "#4A4036",
     letterSpacing: -0.5,
   },
@@ -812,8 +805,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    // FONT CHANGE: Replaced fontWeight: "700"
-    fontFamily: getFontFamily(700), 
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was 700)
+    fontFamily: 'Nunito-Bold', 
     color: "#9C9480",
     letterSpacing: 1.5,
     marginBottom: 8,
@@ -859,8 +852,8 @@ const styles = StyleSheet.create({
   selectorText: {
     flex: 1,
     fontSize: 18,
-    // FONT CHANGE: Replaced fontWeight: "700"
-    fontFamily: getFontFamily(700), 
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was 700)
+    fontFamily: 'Nunito-Bold', 
     color: "#4A4036",
   },
   dropdown: {
@@ -888,8 +881,8 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: 16,
-    // FONT CHANGE: Replaced fontWeight: "600"
-    fontFamily: getFontFamily(600), 
+    // FONT CHANGE: Hardcoded 'Nunito-SemiBold' (was 600)
+    fontFamily: 'Nunito-SemiBold', 
     color: "#4A4036",
   },
   recorderSection: {
@@ -900,15 +893,15 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontSize: 18,
-    // FONT CHANGE: Replaced fontWeight: "700"
-    fontFamily: getFontFamily(700), 
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was 700)
+    fontFamily: 'Nunito-Bold', 
     color: "#A1887F",
     marginBottom: 8,
   },
   timerText: {
     fontSize: 80,
-    // FONT CHANGE: Replaced fontWeight: "900"
-    fontFamily: getFontFamily(900), 
+    // FONT CHANGE: Hardcoded 'Nunito-ExtraBold' (was 900)
+    fontFamily: 'Nunito-ExtraBold', 
     fontVariant: ["tabular-nums"],
     marginBottom: 40,
     letterSpacing: -2,
@@ -959,8 +952,8 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#FFF8E1",
     fontSize: 18,
-    // FONT CHANGE: Replaced fontWeight: "bold"
-    fontFamily: getFontFamily('bold'), 
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was bold)
+    fontFamily: 'Nunito-Bold', 
     letterSpacing: 0.5,
   },
   
@@ -998,8 +991,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    // FONT CHANGE: Replaced fontWeight: "800"
-    fontFamily: getFontFamily(800), 
+    // FONT CHANGE: Hardcoded 'Nunito-ExtraBold' (was 800)
+    fontFamily: 'Nunito-ExtraBold', 
     color: "#4A4036",
   },
   modalInput: {
@@ -1009,8 +1002,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    // FONT CHANGE: Replaced default/no fontWeight
-    fontFamily: getFontFamily(400), 
+    // FONT CHANGE: Hardcoded 'Nunito-Regular' (was 400)
+    fontFamily: 'Nunito-Regular', 
     color: "#4A4036",
     marginBottom: 20,
   },
@@ -1026,7 +1019,7 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#FFF8E1",
     fontSize: 16,
-    // FONT CHANGE: Replaced fontWeight: "700"
-    fontFamily: getFontFamily(700), 
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was 700)
+    fontFamily: 'Nunito-Bold', 
   },
 });
