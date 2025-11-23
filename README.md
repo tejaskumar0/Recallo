@@ -40,4 +40,4 @@ In a fast-paced world, it's easy to let meaningful details slip through the crac
 
 ---
 
-*Built with ❤️ for the Hackathon*
+*Built with ❤️ for Platanus*
