@@ -126,3 +126,41 @@ export const fetchContentByUserFriendEventId = async (userFriendEventId: string)
     return [];
   }
 };
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correct_answer: number;
+  topic: string;
+  explanation: string;
+}
+
+export interface QuizResponse {
+  questions: QuizQuestion[];
+  friend_name: string;
+}
+
+export const generateQuiz = async (userId: string, friendId: string): Promise<QuizResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/quiz/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        friend_id: friendId,
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to generate quiz');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error generating quiz:', error);
+    throw error;
+  }
+};

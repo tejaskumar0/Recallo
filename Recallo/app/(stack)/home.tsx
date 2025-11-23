@@ -169,13 +169,15 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </Link>
 
-          <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}>
-            <Brain size={30} color={palette.textPrimary} style={styles.actionIcon} />
-            <View style={styles.actionTextContainer}>
-                <Text style={styles.actionTitle}>Take a Quiz</Text>
-                <Text style={styles.actionSubtitle}>Test your memory on recent conversations.</Text>
-            </View>
-          </TouchableOpacity>
+          <Link href="/quiz" asChild>
+            <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}>
+              <Brain size={30} color={palette.textPrimary} style={styles.actionIcon} />
+              <View style={styles.actionTextContainer}>
+                  <Text style={styles.actionTitle}>Take a Quiz</Text>
+                  <Text style={styles.actionSubtitle}>Test your memory on recent conversations.</Text>
+              </View>
+            </TouchableOpacity>
+          </Link>
 
         </View>
 

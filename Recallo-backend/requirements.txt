@@ -7,3 +7,4 @@ supabase
 email-validator
 deepgram-sdk
 python-multipart
+anthropic
