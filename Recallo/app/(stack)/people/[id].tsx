@@ -31,9 +31,12 @@ const shadow = {
 const CARD_RADIUS = 18;
 const H_PADDING = 24;
 
+import { useAuth } from '../../../contexts/AuthContext';
+
 export default function PersonEventsScreen() {
   const router = useRouter();
   const { id, name } = useLocalSearchParams();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
 
   const personId = Array.isArray(id) ? id[0] : id ?? "";
@@ -42,13 +45,13 @@ export default function PersonEventsScreen() {
   useEffect(() => {
     const loadEvents = async () => {
       console.log("working")
-      if (personId) {
-        const data = await fetchEventsByUserAndFriend('cf1acd40-f837-4d01-b459-2bce15fe061a', personId);
+      if (personId && user?.id) {
+        const data = await fetchEventsByUserAndFriend(user.id, personId);
         setEvents(data);
       }
     };
     loadEvents();
-  }, [personId]);
+  }, [personId, user?.id]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -84,7 +87,7 @@ export default function PersonEventsScreen() {
               onPress={() => router.push({
                 pathname: "/content/[user]/[friend]/[event]",
                 params: { 
-                  user: 'cf1acd40-f837-4d01-b459-2bce15fe061a', // Hardcoded for now as per other files
+                  user: user?.id ?? '',
                   friend: personId,
                   event: item.id 
                 }

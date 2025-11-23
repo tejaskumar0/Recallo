@@ -31,23 +31,26 @@ const shadow = {
 const CARD_RADIUS = 18;
 const H_PADDING = 24;
 
+import { useAuth } from '../../contexts/AuthContext';
+
 export default function EventDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { user } = useAuth();
   const [friends, setFriends] = useState<Friend[]>([]);
 
   const eventId = Array.isArray(id) ? id[0] : id ?? "";
 
   useEffect(() => {
     const loadFriends = async () => {
-      if (eventId) {
-        const data = await fetchFriendsByUserAndEvent('cf1acd40-f837-4d01-b459-2bce15fe061a', eventId);
+      if (eventId && user?.id) {
+        const data = await fetchFriendsByUserAndEvent(user.id, eventId);
         setFriends(data);
         console.log(data);
       }
     };
     loadFriends();
-  }, [eventId]);
+  }, [eventId, user?.id]);
 
   if (!friends) {
     return (
@@ -86,7 +89,7 @@ export default function EventDetailsScreen() {
                   onPress={() => router.push({
                     pathname: "/content/[user]/[friend]/[event]",
                     params: {
-                      user: 'cf1acd40-f837-4d01-b459-2bce15fe061a', // Hardcoded for now
+                      user: user?.id ?? '',
                       friend: friend.id,
                       event: eventId
                     }

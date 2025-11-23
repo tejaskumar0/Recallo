@@ -1,12 +1,12 @@
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  FlatList,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { Event, fetchEventsByUser } from "../../services/api";
 
@@ -30,19 +30,21 @@ const shadow = {
 const CARD_RADIUS = 18;
 const H_PADDING = 24;
 
+import { useAuth } from '../../contexts/AuthContext';
+
 export default function EventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadEvents = async () => {
-      // Ensure this user ID is correct or replace with dynamic ID from AuthContext
-      const data = await fetchEventsByUser(
-        "cf1acd40-f837-4d01-b459-2bce15fe061a"
-      );
-      setEvents(data);
+      if (user?.id) {
+        const data = await fetchEventsByUser(user.id);
+        setEvents(data);
+      }
     };
     loadEvents();
-  }, []);
+  }, [user?.id]);
 
   const formatFriendNames = (names: string[]) => {
     if (!names || names.length === 0) return "";

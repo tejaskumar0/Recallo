@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
-  Dimensions,
   Easing,
   KeyboardAvoidingView,
   Modal,
@@ -17,10 +16,11 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Event, fetchEventsByUser, fetchEventsByUserAndFriend, fetchFriendsbyUser, Friend } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
+import { Event, fetchEventsByUser, fetchFriendsbyUser, Friend } from "../../services/api";
 
 // --- CONFIGURATION ---
 const API_BASE = "http://127.0.0.1:8000/api/v1";
@@ -32,10 +32,11 @@ const USER_EVENTS_URL = `${API_BASE}/relations/user-events/`;
 const USER_FRIENDS_EVENTS_URL = `${API_BASE}/relations/user-friends-events/`;
 
 
-const CURRENT_USER_ID = 'cf1acd40-f837-4d01-b459-2bce15fe061a';
+
 
 export default function CaptureScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   
   // --- Data State ---
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -71,12 +72,15 @@ export default function CaptureScreen() {
   // 1. LOAD FRIENDS
   // ============================================================
   useEffect(() => {
-    loadFriends();
-  }, []);
+    if (user?.id) {
+      loadFriends();
+    }
+  }, [user?.id]);
 
   const loadFriends = async () => {
+    if (!user?.id) return;
     try {
-      const data = await fetchFriendsbyUser(CURRENT_USER_ID);
+      const data = await fetchFriendsbyUser(user.id);
       console.log(data)
       setFriends(data);
     } catch (error) {
@@ -92,8 +96,10 @@ export default function CaptureScreen() {
       if (selectedFriend?.id) {
         try {
           setEvents([]); 
-          const data = await fetchEventsByUser(CURRENT_USER_ID);
-          setEvents(data);
+          if (user?.id) {
+            const data = await fetchEventsByUser(user.id);
+            setEvents(data);
+          }
         } catch (error) {
           console.error("Error loading events:", error);
         }
@@ -123,7 +129,7 @@ export default function CaptureScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           friend_name: newFriendName,
-          user_id: CURRENT_USER_ID 
+          user_id: user?.id 
         })
       });
 
@@ -139,7 +145,7 @@ export default function CaptureScreen() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            user_id: CURRENT_USER_ID,
+            user_id: user?.id,
             friend_id: newFriend.id,
             username: "testuser",
             friendname: newFriend.friend_name
@@ -201,7 +207,7 @@ export default function CaptureScreen() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: CURRENT_USER_ID,
+          user_id: user?.id,
           event_id: newEvent.id
         })
       });
@@ -319,7 +325,7 @@ export default function CaptureScreen() {
 
       // 2. CREATE FINAL USER-FRIENDS-EVENTS RELATION
       const finalRelationPayload = {
-        user_id: CURRENT_USER_ID,
+        user_id: user?.id,
         friend_id: selectedFriend.id,
         event_id: selectedEvent.id,
       };

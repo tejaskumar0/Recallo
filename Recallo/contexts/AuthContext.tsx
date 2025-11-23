@@ -1,7 +1,19 @@
-import React, { createContext, useState, useEffect, useContext } from 'react'
+import { Session, User } from '@supabase/supabase-js'
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const AuthContext = createContext({})
+type AuthContextType = {
+  user: User | null
+  session: Session | null
+  loading: boolean
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ data: any; error: string | null }>
+  signIn: (email: string, password: string) => Promise<{ data: any; error: string | null }>
+  signOut: () => Promise<{ error: string | null }>
+  resetPassword: (email: string) => Promise<{ data: any; error: string | null }>
+  updateProfile: (updates: any) => Promise<{ data: any; error: string | null }>
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
@@ -11,9 +23,9 @@ export const useAuth = () => {
   return context
 }
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [session, setSession] = useState(null)
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -31,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = async (email, password, metadata = {}) => {
+  const signUp = async (email: string, password: string, metadata = {}) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -48,12 +60,12 @@ export const AuthProvider = ({ children }) => {
       }
       
       return { data, error: null }
-    } catch (error) {
+    } catch (error: any) {
       return { data: null, error: error.message }
     }
   }
 
-  const signIn = async (email, password) => {
+  const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -61,7 +73,7 @@ export const AuthProvider = ({ children }) => {
       })
       if (error) throw error
       return { data, error: null }
-    } catch (error) {
+    } catch (error: any) {
       return { data: null, error: error.message }
     }
   }
@@ -71,29 +83,29 @@ export const AuthProvider = ({ children }) => {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       return { error: null }
-    } catch (error) {
+    } catch (error: any) {
       return { error: error.message }
     }
   }
 
-  const resetPassword = async (email) => {
+  const resetPassword = async (email: string) => {
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email)
       if (error) throw error
       return { data, error: null }
-    } catch (error) {
+    } catch (error: any) {
       return { data: null, error: error.message }
     }
   }
 
-  const updateProfile = async (updates) => {
+  const updateProfile = async (updates: any) => {
     try {
       const { data, error } = await supabase.auth.updateUser({
         data: updates
       })
       if (error) throw error
       return { data, error: null }
-    } catch (error) {
+    } catch (error: any) {
       return { data: null, error: error.message }
     }
   }

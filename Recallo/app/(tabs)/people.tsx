@@ -23,18 +23,22 @@ const shadow = {
 const CARD_RADIUS = 18;
 const H_PADDING = 24;
 
+import { useAuth } from '../../contexts/AuthContext';
+
 export default function PeopleScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [friends, setFriends] = useState<Friend[]>([]);
 
   useEffect(() => {
     const loadFriends = async () => {
-      // Replace static ID with dynamic user ID when ready
-      const data = await fetchFriendsbyUser('cf1acd40-f837-4d01-b459-2bce15fe061a');
-      setFriends(data);
+      if (user?.id) {
+        const data = await fetchFriendsbyUser(user.id);
+        setFriends(data);
+      }
     };
     loadFriends();
-  }, []);
+  }, [user?.id]);
 
   return (
     <SafeAreaView style={styles.container}>
