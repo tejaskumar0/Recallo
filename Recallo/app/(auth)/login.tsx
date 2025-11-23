@@ -6,10 +6,24 @@ import {
   TouchableOpacity, 
   StyleSheet, 
   Alert, 
-  ActivityIndicator 
+  ActivityIndicator,
+  SafeAreaView, 
 } from "react-native";
 import { useRouter, Link } from "expo-router";
-import { useAuth } from "../../contexts/AuthContext";
+// NOTE: Assuming useAuth is correctly imported from your context file
+import { useAuth } from "../../contexts/AuthContext"; 
+
+// Define the palette outside the component for clean access
+const palette = {
+  background: "#f2efe0ff",
+  card: "#f3f3d0ff", 
+  textPrimary: "#2b2100", 
+  textSecondary: "#4f4a2e", 
+  accent: "#fef08a", 
+  border: "rgba(0, 0, 0, 0.05)",
+  buttonPrimary: "#2b2100", 
+  buttonText: "#f2efe0ff", 
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -17,6 +31,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
@@ -25,137 +40,184 @@ export default function LoginScreen() {
 
     setLoading(true);
 
-    const { data, error } = await signIn(email, password);
-    
-    if (error) {
-      setLoading(false);
-      Alert.alert("Login Error", error);
-      return;
-    }
+    try {
+        // Use real signIn function provided by AuthContext
+        const { data, error } = await signIn(email, password); 
+        
+        if (error) {
+            // Check for a specific error message structure if needed
+            throw new Error(error.message || error);
+        }
 
-    setLoading(false);
-    router.replace("/home");
+        setLoading(false);
+        router.replace("/home");
+    } catch (error: any) {
+        setLoading(false);
+        Alert.alert("Login Error", error.message || "An unexpected error occurred during login.");
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Welcome Back</Text>
 
-      <View style={styles.form}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={setEmail}
-            value={email}
-            placeholder="coco@example.com"
-            placeholderTextColor="#A1887F"
-            autoCapitalize="none"
-          />
-        </View>
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                onChangeText={setEmail}
+                value={email}
+                placeholder="Enter your email"
+                placeholderTextColor={palette.textSecondary + '80'} 
+                autoCapitalize="none"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+              />
+            </View>
+          </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={setPassword}
-            value={password}
-            placeholder="********"
-            placeholderTextColor="#A1887F"
-            secureTextEntry={true}
-            autoCapitalize="none"
-          />
-        </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                onChangeText={setPassword}
+                value={password}
+                placeholder="********"
+                placeholderTextColor={palette.textSecondary + '80'}
+                secureTextEntry={true}
+                autoCapitalize="none"
+                textContentType="password"
+              />
+            </View>
+          </View>
 
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFF8E1" />
-          ) : (
-            <Text style={styles.buttonText}>Log In</Text>
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={palette.buttonText} />
+            ) : (
+              <Text style={styles.buttonText}>Log In</Text>
+            )}
+          </TouchableOpacity>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don&apos;t have an account? </Text>
-          <Link href="/signup" asChild>
-            <TouchableOpacity>
-              <Text style={styles.link}>Sign Up</Text>
-            </TouchableOpacity>
-          </Link>
+          <View style={styles.forgotPasswordContainer}>
+             <TouchableOpacity onPress={() => Alert.alert("Forgot Password", "Navigate to password reset screen.")}>
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+             </TouchableOpacity>
+          </View>
+
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don&apos;t have an account? </Text>
+            <Link href="/signup" asChild>
+              <TouchableOpacity>
+                <Text style={styles.link}>Sign Up</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: palette.background, 
+  },
   container: {
     flex: 1,
-    backgroundColor: "#FDFCF4", // Your yellow/cream theme
-    padding: 24,
+    backgroundColor: palette.background, 
+    paddingHorizontal: 30, 
     justifyContent: "center",
   },
   title: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: "#4A4036",
-    marginBottom: 40,
+    fontSize: 40, 
+    fontFamily: 'Nunito-ExtraBold', // Applied specific font family
+    color: palette.textPrimary,
+    marginBottom: 60,
     textAlign: "center",
+    letterSpacing: -1,
   },
   form: {
-    gap: 20,
+    gap: 25, 
   },
   inputGroup: {
     gap: 8,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#4A4036",
-    letterSpacing: 0.5,
+    fontSize: 16,
+    fontFamily: 'Nunito-Bold', // Applied specific font family
+    color: palette.textSecondary, 
+    marginLeft: 10,
+  },
+  inputWrapper: {
+    backgroundColor: palette.card, 
+    borderRadius: 20, 
+    shadowColor: palette.textPrimary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, 
+    shadowRadius: 2,
+    elevation: 1,
+    paddingHorizontal: 10, 
   },
   input: {
-    backgroundColor: "#FFFDF5",
-    borderWidth: 2,
-    borderColor: "#F0EAD6",
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 16,
-    color: "#4A4036",
+    backgroundColor: 'transparent', 
+    height: 58, 
+    fontSize: 18,
+    fontFamily: 'Nunito-Regular', // Applied specific font family
+    color: palette.textPrimary,
+    paddingHorizontal: 10,
   },
   button: {
-    backgroundColor: "#4A4036",
-    paddingVertical: 18,
+    backgroundColor: palette.buttonPrimary,
+    paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
-    marginTop: 10,
-    shadowColor: "#4A4036",
-    shadowOffset: { width: 0, height: 4 },
+    marginTop: 20,
+    shadowColor: palette.buttonPrimary,
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 10,
+    elevation: 8,
   },
   buttonText: {
-    color: "#FFF8E1",
-    fontSize: 18,
-    fontWeight: "bold",
+    color: palette.buttonText,
+    fontSize: 20,
+    fontFamily: 'Nunito-ExtraBold', // Applied specific font family
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginTop: -10,
+    marginRight: 10,
+  },
+  forgotPasswordText: {
+    color: palette.textSecondary,
+    fontSize: 14,
+    fontFamily: 'Nunito-Regular', // Applied specific font family
+    textDecorationLine: 'underline',
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 20,
+    marginTop: 40,
   },
   footerText: {
-    color: "#9C9480",
-    fontSize: 14,
+    color: palette.textSecondary,
+    fontSize: 16,
+    fontFamily: 'Nunito-Regular', // Applied specific font family
   },
   link: {
-    color: "#FF7043", // Accent color
-    fontWeight: "bold",
-    fontSize: 14,
+    color: palette.textPrimary, 
+    fontFamily: 'Nunito-Bold', // Applied specific font family
+    fontSize: 16,
   },
 });
