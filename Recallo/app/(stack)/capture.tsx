@@ -31,7 +31,23 @@ const USER_FRIENDS_URL = `${API_BASE}/relations/user-friends/`;
 const USER_EVENTS_URL = `${API_BASE}/relations/user-events/`;
 const USER_FRIENDS_EVENTS_URL = `${API_BASE}/relations/user-friends-events/`;
 
-
+// --- FONT MAPPING ---
+// Map numeric font weights to your Nunito asset names
+const getFontFamily = (weight: string | number): string => {
+  switch (String(weight)) {
+    case '600':
+      return 'Nunito-SemiBold';
+    case '700':
+    case 'bold':
+      return 'Nunito-Bold';
+    case '800':
+    case '900':
+      return 'Nunito-ExtraBold';
+    default:
+      return 'Nunito-Regular';
+  }
+};
+// --- END FONT MAPPING ---
 
 
 export default function CaptureScreen() {
@@ -296,7 +312,7 @@ export default function CaptureScreen() {
     }
 
     setIsUploading(true);
-    let finalUserFriendEventId = null; // Variable to hold the ID needed for the next screen
+    let finalUserFriendEventId = null; 
     
     try {
       // 1. UPLOAD AUDIO
@@ -341,23 +357,17 @@ export default function CaptureScreen() {
       if (!finalRelationResponse.ok) {
         console.warn("⚠️ Final Relation Link FAILED:", finalRelationResponse.status, await finalRelationResponse.text());
         Alert.alert("Warning", "Memory saved but failed to link all three IDs (check backend logs).");
-        // If linking fails, we can't save the content on the next screen, so we might want to return here.
-        // For now, we continue but finalUserFriendEventId remains null.
       } else {
-        // --- FIX: Read the response body to get the ID ---
         const finalRelationData = await finalRelationResponse.json();
-        // Assuming your backend returns the created object with an 'id' property
         finalUserFriendEventId = finalRelationData.id; 
         console.log("✅ Final User-Friend-Event Relation Linked! ID:", finalUserFriendEventId);
       }
       
       // 3. NAVIGATE TO REVIEW
-      // --- FIX: Pass the retrieved ID as a string parameter ---
       router.push({
         pathname: "/review" as any,
         params: { 
             data: JSON.stringify(result),
-            // Pass the ID as a string. If it's null (if step 2 failed), pass an empty string.
             userFriendEventId: finalUserFriendEventId ? String(finalUserFriendEventId) : '' 
         } 
       });
@@ -384,7 +394,6 @@ export default function CaptureScreen() {
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isRecording) {
-      // Animation logic omitted for brevity, assumed correct.
       startPulse();
       interval = setInterval(() => {
         setDuration((prev) => prev + 1);
@@ -398,7 +407,6 @@ export default function CaptureScreen() {
 
   useEffect(() => {
     const createBlobAnimation = (animValue: Animated.Value, duration: number) => {
-      // Animation logic omitted for brevity, assumed correct.
       return Animated.loop(
         Animated.sequence([
           Animated.timing(animValue, { toValue: 1, duration: duration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
@@ -774,7 +782,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: "800",
+    // FONT CHANGE: Replaced fontFamily: "Nunito-Bold" 
+    fontFamily: getFontFamily(700), 
     color: "#4A4036",
     letterSpacing: -0.5,
   },
@@ -803,7 +812,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontWeight: "700",
+    // FONT CHANGE: Replaced fontWeight: "700"
+    fontFamily: getFontFamily(700), 
     color: "#9C9480",
     letterSpacing: 1.5,
     marginBottom: 8,
@@ -849,7 +859,8 @@ const styles = StyleSheet.create({
   selectorText: {
     flex: 1,
     fontSize: 18,
-    fontWeight: "700",
+    // FONT CHANGE: Replaced fontWeight: "700"
+    fontFamily: getFontFamily(700), 
     color: "#4A4036",
   },
   dropdown: {
@@ -877,7 +888,8 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: 16,
-    fontWeight: "600",
+    // FONT CHANGE: Replaced fontWeight: "600"
+    fontFamily: getFontFamily(600), 
     color: "#4A4036",
   },
   recorderSection: {
@@ -888,13 +900,15 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontSize: 18,
-    fontWeight: "700",
+    // FONT CHANGE: Replaced fontWeight: "700"
+    fontFamily: getFontFamily(700), 
     color: "#A1887F",
     marginBottom: 8,
   },
   timerText: {
     fontSize: 80,
-    fontWeight: "900",
+    // FONT CHANGE: Replaced fontWeight: "900"
+    fontFamily: getFontFamily(900), 
     fontVariant: ["tabular-nums"],
     marginBottom: 40,
     letterSpacing: -2,
@@ -945,7 +959,8 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#FFF8E1",
     fontSize: 18,
-    fontWeight: "bold",
+    // FONT CHANGE: Replaced fontWeight: "bold"
+    fontFamily: getFontFamily('bold'), 
     letterSpacing: 0.5,
   },
   
@@ -983,7 +998,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "800",
+    // FONT CHANGE: Replaced fontWeight: "800"
+    fontFamily: getFontFamily(800), 
     color: "#4A4036",
   },
   modalInput: {
@@ -993,6 +1009,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
+    // FONT CHANGE: Replaced default/no fontWeight
+    fontFamily: getFontFamily(400), 
     color: "#4A4036",
     marginBottom: 20,
   },
@@ -1008,6 +1026,7 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#FFF8E1",
     fontSize: 16,
-    fontWeight: "700",
+    // FONT CHANGE: Replaced fontWeight: "700"
+    fontFamily: getFontFamily(700), 
   },
 });

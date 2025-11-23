@@ -57,7 +57,7 @@ export default function RootLayout() {
         {/* Conditional rendering based on session */}
         {session && session.user ? (
           // User is authenticated: Show the main app tabs
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(stack)" />
         ) : (
           // User is NOT authenticated: Show the authentication flow (login/signup)
           <Stack.Screen name="(auth)" />
