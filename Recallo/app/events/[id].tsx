@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -38,25 +39,47 @@ export default function EventDetailsScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const eventId = Array.isArray(id) ? id[0] : id ?? "";
 
   useEffect(() => {
     const loadFriends = async () => {
       if (eventId && user?.id) {
-        const data = await fetchFriendsByUserAndEvent(user.id, eventId);
-        setFriends(data);
-        console.log(data);
+        try {
+          setLoading(true);
+          const data = await fetchFriendsByUserAndEvent(user.id, eventId);
+          setFriends(data);
+          console.log(data);
+        } catch (error) {
+          console.error("Error loading friends:", error);
+        } finally {
+          setLoading(false);
+        }
       }
     };
     loadFriends();
   }, [eventId, user?.id]);
 
-  if (!friends) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="arrow-back" size={24} color={palette.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <Image 
+            source={require('../../assets/images/loader.gif')} 
+            style={styles.loader}
+            resizeMode="contain"
+          />
         </View>
       </SafeAreaView>
     );
@@ -184,5 +207,19 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: palette.background,
+  },
+  loader: {
+    width: '100%',
+    height: '100%',
   },
 });

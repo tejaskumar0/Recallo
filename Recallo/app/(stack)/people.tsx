@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { fetchFriendsbyUser, Friend } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../contexts/AuthContext';
+import { fetchFriendsbyUser, Friend } from '../../services/api';
 
 // --- CONSTANTS ---
 const palette = {
@@ -46,25 +46,43 @@ const CustomHeader = ({ router, styles }: CustomHeaderProps) => (
 );
 // --- End Header Component ---
 
-
 export default function PeopleScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadFriends = async () => {
       if (user?.id) {
         try {
+          setLoading(true);
           const data = await fetchFriendsbyUser(user.id);
           setFriends(data);
         } catch (error) {
           console.error("Error loading friends:", error);
+        } finally {
+          setLoading(false);
         }
       }
     };
     loadFriends();
   }, [user?.id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <CustomHeader router={router} styles={styles} />
+        <View style={styles.loadingContainer}>
+          <Image 
+            source={require('../../assets/images/loader.gif')} 
+            style={styles.loader}
+            resizeMode="contain"
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -225,5 +243,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
     opacity: 0.8,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: palette.background,
+  },
+  loader: {
+    width: '100%',
+    height: '100%',
   },
 });

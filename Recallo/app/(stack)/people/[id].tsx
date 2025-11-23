@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   FlatList,
+  Image,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -38,6 +39,7 @@ export default function PersonEventsScreen() {
   const { id, name } = useLocalSearchParams();
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const personId = Array.isArray(id) ? id[0] : id ?? "";
   const personName = Array.isArray(name) ? name[0] : name ?? "Person";
@@ -46,12 +48,48 @@ export default function PersonEventsScreen() {
     const loadEvents = async () => {
       console.log("working")
       if (personId && user?.id) {
-        const data = await fetchEventsByUserAndFriend(user.id, personId);
-        setEvents(data);
+        try {
+          setLoading(true);
+          const data = await fetchEventsByUserAndFriend(user.id, personId);
+          setEvents(data);
+        } catch (error) {
+          console.error("Error loading events:", error);
+        } finally {
+          setLoading(false);
+        }
       }
     };
     loadEvents();
   }, [personId, user?.id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="arrow-back" size={24} color={palette.textPrimary} />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>{personName}</Text>
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <Image 
+              source={require('../../../assets/images/loader.gif')} 
+              style={styles.loader}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -171,5 +209,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     marginTop: 20,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: palette.background,
+  },
+  loader: {
+    width: '100%',
+    height: '100%',
   },
 });

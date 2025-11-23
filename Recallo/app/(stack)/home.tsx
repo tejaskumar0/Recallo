@@ -1,17 +1,17 @@
 import { Link, useRouter } from "expo-router";
+import { Brain, CalendarDays, Mic, Users } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Image,
   SafeAreaView,
   ScrollView,
-  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useEffect, useState } from "react";
-import { Friend, fetchFriendsbyUser, Event, fetchEventsByUser } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
-import { Mic, Users, CalendarDays, Brain } from "lucide-react-native";
+import { Event, Friend, fetchEventsByUser, fetchFriendsbyUser } from "../../services/api";
 
 // --- CONSTANT DECLARATIONS ---
 const palette = {
@@ -125,7 +125,6 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerBlock}>
-          <Text style={styles.welcomeText}>Welcome Back!</Text> 
           <Image 
             source={require("../../assets/images/logo pic.png")}
             style={styles.logo}
@@ -142,7 +141,7 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}> 
               <Users size={30} color={palette.textPrimary} style={styles.actionIcon} />
               <View style={styles.actionTextContainer}>
-                <Text style={styles.actionTitle}>View Friends ({friends.length})</Text> 
+                <Text style={styles.actionTitle}>View Friends</Text> 
                 <Text style={styles.actionSubtitle}>See profiles, pets, and key relationships.</Text> 
               </View>
             </TouchableOpacity>
@@ -152,7 +151,7 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}>
               <CalendarDays size={30} color={palette.textPrimary} style={styles.actionIcon} />
               <View style={styles.actionTextContainer}>
-                <Text style={styles.actionTitle}>Browse by Events ({events.length})</Text>
+                <Text style={styles.actionTitle}>Browse by Events</Text>
                 <Text style={styles.actionSubtitle}>Timeline of memories, meetings, and activities.</Text>
               </View>
             </TouchableOpacity>
@@ -198,14 +197,16 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   logo: {
-    height: 60,
-    marginBottom: 8,
+    height: 120,
+    width: "100%",
+    alignSelf: 'flex-start', // Align with text
+    marginVertical: 24,
   },
   appSubtitle: {
-    fontSize: 15, 
+    fontSize: 24, 
     fontFamily: 'Nunito-Regular', 
     color: palette.textSecondary,
-    marginBottom: 16,
+    padding: 8,
     lineHeight: 22,
   },
   

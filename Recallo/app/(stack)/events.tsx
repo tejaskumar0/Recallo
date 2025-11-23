@@ -1,17 +1,17 @@
 import { useRouter } from "expo-router";
+import { ArrowLeft } from 'lucide-react-native';
 import React, { useEffect, useState } from "react";
 import {
-    FlatList,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    ScrollView, 
+  FlatList,
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { Event, fetchEventsByUser } from "../../services/api";
 import { useAuth } from '../../contexts/AuthContext';
-import { ArrowLeft } from 'lucide-react-native';
+import { Event, fetchEventsByUser } from "../../services/api";
 
 
 // --- CONSTANTS ---
@@ -74,15 +74,19 @@ export default function EventsScreen() {
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadEvents = async () => {
       if (user?.id) {
         try {
+          setLoading(true);
           const data = await fetchEventsByUser(user.id);
           setEvents(data);
         } catch (error) {
           console.error("Error loading events:", error);
+        } finally {
+          setLoading(false);
         }
       }
     };
@@ -96,6 +100,21 @@ export default function EventsScreen() {
     const remaining = names.length - 3;
     return `${firstThree} + ${remaining} others`;
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <CustomHeader router={router} styles={styles} />
+        <View style={styles.loadingContainer}>
+          <Image 
+            source={require('../../assets/images/loader.gif')} 
+            style={styles.loader}
+            resizeMode="contain"
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -256,5 +275,19 @@ const styles = StyleSheet.create({
     // FONT CHANGE: Replaced default/no fontWeight (assumed Regular)
     fontFamily: 'Nunito-Regular', 
     color: palette.textSecondary,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: palette.background,
+  },
+  loader: {
+    width: '100%',
+    height: '100%',
   },
 });
