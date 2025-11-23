@@ -183,8 +183,14 @@ export default function CaptureScreen() {
       
       console.log("------------------------------------------------");
       console.log("✅ MEMORY SAVED SUCCESSFULLY");
-      console.log("Parsed Result:", JSON.stringify(result, null, 2));
-      console.log("------------------------------------------------");
+      console.log(JSON.stringify(result, null, 2));
+      // ----------------------------------------------------
+      // NAVIGATE TO REVIEW PAGE
+      // ----------------------------------------------------
+      router.push({
+        pathname: "/review" as any,
+        params: { data: JSON.stringify(result) } 
+      });
 
       Alert.alert("Success", "Memory analyzed and saved!");
       
