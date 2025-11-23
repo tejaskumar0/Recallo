@@ -1,17 +1,17 @@
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import { ChevronLeft, Lock, Users } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Image,
   SafeAreaView,
   ScrollView,
-  ActivityIndicator
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useEffect, useState } from "react";
-import { Friend, fetchFriendsbyUser, fetchEventsByUserAndFriend } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
-import { ChevronLeft, Users, Lock } from "lucide-react-native";
+import { Friend, fetchEventsByUserAndFriend, fetchFriendsbyUser } from "../../services/api";
 
 const palette = {
   background: "#f2efe0ff",
@@ -78,8 +78,11 @@ export default function QuizScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={palette.accent} />
-          <Text style={styles.loadingText}>Loading friends...</Text>
+          <Image
+            source={require("../../assets/images/loader.gif")}
+            style={styles.loader}
+            resizeMode="contain"
+          />
         </View>
       </SafeAreaView>
     );
@@ -237,15 +240,18 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: palette.background,
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    fontFamily: 'Nunito-Regular',
-    color: palette.textSecondary,
+  loader: {
+    width: "100%",
+    height: "100%",
   },
   emptyState: {
     alignItems: 'center',

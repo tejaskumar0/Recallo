@@ -1,18 +1,18 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { CheckCircle, ChevronLeft, ChevronRight, Trophy, XCircle } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Alert,
+  Image,
   SafeAreaView,
   ScrollView,
-  ActivityIndicator,
-  Alert
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { useEffect, useState } from "react";
-import { generateQuiz, QuizQuestion, QuizResponse } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, Trophy } from "lucide-react-native";
+import { generateQuiz, QuizResponse } from "../../services/api";
 
 const palette = {
   background: "#f2efe0ff",
@@ -147,7 +147,11 @@ export default function QuizTakingScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={palette.accent} />
+          <Image
+            source={require("../../assets/images/loader.gif")}
+            style={styles.loader}
+            resizeMode="contain"
+          />
           <Text style={styles.loadingText}>Generating your quiz...</Text>
           <Text style={styles.loadingSubtext}>This may take a moment</Text>
         </View>
@@ -573,18 +577,26 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: palette.background,
+  },
+  loader: {
+    width: "100%",
+    height: "25%",
   },
   loadingText: {
-    marginTop: 16,
     fontSize: 18,
     fontFamily: 'Nunito-SemiBold',
     color: palette.textPrimary,
+    marginBottom: 4,
   },
   loadingSubtext: {
-    marginTop: 8,
     fontSize: 14,
     fontFamily: 'Nunito-Regular',
     color: palette.textSecondary,
