@@ -8,16 +8,13 @@ import {
   SafeAreaView,
   ScrollView,
 } from "react-native";
-import { useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { Event, fetchEventsByUser } from "../../services/api";
+import { colors, spacing, radius, typography } from "../../constants/theme";
 
 const MOCK_PEOPLE = [
   { id: "1", name: "John Tan", lastEvent: "Coffee chat about job search" },
   { id: "2", name: "Sarah Lim", lastEvent: "Project sync" },
-];
-
-const MOCK_EVENTS = [
-  { id: "1", title: "Lunch at NUS", person: "John Tan", date: "21 Nov 2025" },
-  { id: "2", title: "Sprint planning", person: "Sarah Lim", date: "20 Nov 2025" },
 ];
 
 function WeekCalendar() {
@@ -58,9 +55,7 @@ function WeekCalendar() {
             <Text style={[styles.dayName, isToday && styles.dayNameActive]}>
               {label}
             </Text>
-            <Text
-              style={[styles.dayNumber, isToday && styles.dayNumberActive]}
-            >
+            <Text style={[styles.dayNumber, isToday && styles.dayNumberActive]}>
               {date.getDate()}
             </Text>
           </View>
@@ -72,6 +67,26 @@ function WeekCalendar() {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [events, setEvents] = useState<Event[]>([]);
+
+  const formatFriendNames = (names: string[] | null) => {
+    if (!names || names.length === 0) return "";
+    if (names.length <= 3) return names.join(", ");
+    const firstThree = names.slice(0, 3).join(", ");
+    const remaining = names.length - 3;
+    return `${firstThree} + ${remaining} others`;
+  };
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      const data = await fetchEventsByUser(
+        "cf1acd40-f837-4d01-b459-2bce15fe061a"
+      );
+      console.log("EVENTS FROM API:", data);
+      setEvents(data);
+    };
+    loadEvents();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -103,6 +118,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* People section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>People</Text>
@@ -127,6 +143,7 @@ export default function HomeScreen() {
           />
         </View>
 
+        {/* Recent events (from backend) */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Events</Text>
@@ -134,17 +151,22 @@ export default function HomeScreen() {
               <Text style={styles.sectionAction}>See all</Text>
             </Link>
           </View>
+
           <FlatList
-            data={MOCK_EVENTS}
+            data={events}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
             renderItem={({ item }) => (
               <View style={styles.eventRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <Text style={styles.cardTitle}>{item.event_name}</Text>
+
                   <Text style={styles.cardSubtitle}>
-                    {item.person} • {item.date}
+                    {formatFriendNames(item.friend_names)} •{" "}
+                    {item.event_date
+                      ? new Date(item.event_date).toLocaleDateString()
+                      : "No date"}
                   </Text>
                 </View>
               </View>
@@ -153,6 +175,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
+      {/* Floating + button */}
       <TouchableOpacity
         style={styles.fab}
         activeOpacity={0.85}
