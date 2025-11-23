@@ -9,13 +9,8 @@ import {
   ScrollView,
 } from "react-native";
 import { useEffect, useState, useMemo } from "react";
-import { Event, fetchEventsByUser } from "../../services/api";
+import { Friend, fetchFriendsbyUser, Event, fetchEventsByUser } from "../../services/api";
 import { colors, spacing, radius, typography } from "../../constants/theme";
-
-const MOCK_PEOPLE = [
-  { id: "1", name: "John Tan", lastEvent: "Coffee chat about job search" },
-  { id: "2", name: "Sarah Lim", lastEvent: "Project sync" },
-];
 
 function WeekCalendar() {
   const today = useMemo(() => new Date(), []);
@@ -68,6 +63,7 @@ function WeekCalendar() {
 export default function HomeScreen() {
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
 
   const formatFriendNames = (names: string[] | null) => {
     if (!names || names.length === 0) return "";
@@ -86,6 +82,16 @@ export default function HomeScreen() {
       setEvents(data);
     };
     loadEvents();
+  }, []);
+
+  useEffect(() => {
+    const loadFriends = async () => {
+      const data = await fetchFriendsbyUser(
+        "cf1acd40-f837-4d01-b459-2bce15fe061a"
+      );
+      setFriends(data);
+    };
+    loadFriends();
   }, []);
 
   return (
@@ -127,16 +133,16 @@ export default function HomeScreen() {
             </Link>
           </View>
           <FlatList
-            data={MOCK_PEOPLE}
+            data={friends}
             keyExtractor={(item) => item.id}
             horizontal
             showsHorizontalScrollIndicator={false}
             ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
             renderItem={({ item }) => (
               <View style={styles.personCard}>
-                <Text style={styles.cardTitle}>{item.name}</Text>
+                <Text style={styles.cardTitle}>{item.friend_name}</Text>
                 <Text style={styles.cardSubtitle} numberOfLines={2}>
-                  Last event: {item.lastEvent}
+                  Last event: {item.last_event_date}
                 </Text>
               </View>
             )}
