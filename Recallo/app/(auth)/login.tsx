@@ -60,7 +60,7 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.title}>Welcome!</Text>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
