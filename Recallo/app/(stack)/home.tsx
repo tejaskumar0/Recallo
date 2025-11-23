@@ -1,18 +1,17 @@
 import { Link, useRouter } from "expo-router";
+import { Brain, CalendarDays, Mic, Users } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Image,
   SafeAreaView,
   ScrollView,
-  Animated,
-  Easing,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useEffect, useState, useRef } from "react";
-import { Friend, fetchFriendsbyUser, Event, fetchEventsByUser } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
-import { Mic, Users, CalendarDays, Brain } from "lucide-react-native";
+import { Event, Friend, fetchEventsByUser, fetchFriendsbyUser } from "../../services/api";
 
 // --- CONSTANT DECLARATIONS ---
 const palette = {
@@ -41,23 +40,11 @@ const H_PADDING = 24;
 const fabPalette = {
   button: "#FFD54F", // Yellow/Gold
   mic: "#5D4037", // Brown text/icon
-  // pulse: "#FFAB91", // Removed: Pulse color no longer needed
 };
 
-/**
- * Mic Button with a label, without the pulsating ring.
- */
 function RecordFAB({ router }: { router: any }) {
-  // ** UI IMPROVEMENT: Removed pulseAnim and useEffect for animation as the ring is gone. **
-  // const pulseAnim = useRef(new Animated.Value(1)).current;
-  // useEffect(() => { /* animation logic removed */ }, [pulseAnim]);
-
   return (
-    // Container adjusted slightly since the pulse ring's top alignment is no longer relevant
     <View style={fabStyles.container}> 
-      {/* ** UI IMPROVEMENT: Removed Animated.View for the pulse ring. **
-      <Animated.View style={[fabStyles.pulseRing, { transform: [{ scale: pulseAnim }] }]} /> */}
-
       <TouchableOpacity
         style={fabStyles.micButton}
         activeOpacity={0.8}
@@ -77,14 +64,13 @@ const fabStyles = StyleSheet.create({
   container: {
     position: "absolute",
     alignItems: "center",
-    justifyContent: "center", // Center items vertically now that only button and text are present
+    justifyContent: "center",
     left: "50%",
     bottom: 30,
     transform: [{ translateX: -60 }],
     width: 120, 
-    height: 140, // Height is still good for button + text
+    height: 140,
   },
-  // pulseRing: { ... }, 
   micButton: {
     width: 96,
     height: 96,
@@ -97,7 +83,6 @@ const fabStyles = StyleSheet.create({
   labelText: {
     marginTop: 8,
     fontSize: 14,
-    // FONT CHANGE: Replaced fontWeight: "700"
     fontFamily: 'Nunito-Bold', 
     color: palette.textPrimary,
     textAlign: 'center',
@@ -140,8 +125,11 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerBlock}>
-          <Text style={styles.welcomeText}>Welcome Back!</Text> 
-          <Text style={styles.appTitle}>Recallo</Text> 
+          <Image 
+            source={require("../../assets/images/logo pic.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.appSubtitle}>
             Capture conversations. Remember the important bits.
           </Text>
@@ -153,8 +141,8 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}> 
               <Users size={30} color={palette.textPrimary} style={styles.actionIcon} />
               <View style={styles.actionTextContainer}>
-                <Text style={styles.actionTitle}>View Friends ({friends.length})</Text> 
-                <Text style={styles.actionSubtitle}>See profiles, pets, and key relationships.</Text> 
+                <Text style={styles.actionTitle}>View Friends</Text> 
+                <Text style={styles.actionSubtitle}>See profiles and key relationships.</Text> 
               </View>
             </TouchableOpacity>
           </Link>
@@ -163,7 +151,7 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}>
               <CalendarDays size={30} color={palette.textPrimary} style={styles.actionIcon} />
               <View style={styles.actionTextContainer}>
-                <Text style={styles.actionTitle}>Browse by Events ({events.length})</Text>
+                <Text style={styles.actionTitle}>Browse by Events</Text>
                 <Text style={styles.actionSubtitle}>Timeline of memories, meetings, and activities.</Text>
               </View>
             </TouchableOpacity>
@@ -206,25 +194,21 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 14, 
-    // FONT CHANGE: Replaced fontWeight: "600"
     fontFamily: 'Nunito-SemiBold', 
     color: palette.textSecondary,
     marginBottom: 4,
   },
-  appTitle: {
-    fontSize: 44, 
-    // FONT CHANGE: Replaced fontWeight: "900"
-    fontFamily: 'Nunito-ExtraBold', 
-    color: palette.textPrimary,
-    marginBottom: 8,
-    letterSpacing: -0.5,
+  logo: {
+    height: 120,
+    width: "100%",
+    alignSelf: 'flex-start', // Align with text
+    marginVertical: 24,
   },
   appSubtitle: {
-    fontSize: 15, 
-    // FONT CHANGE: Replaced default/no fontWeight (Assumed Regular)
+    fontSize: 24, 
     fontFamily: 'Nunito-Regular', 
     color: palette.textSecondary,
-    marginBottom: 16,
+    padding: 8,
     lineHeight: 22,
   },
   
@@ -250,7 +234,6 @@ const styles = StyleSheet.create({
   },
   actionTitle: {
     color: palette.textPrimary,
-    // FONT CHANGE: Replaced fontWeight: "800"
     fontFamily: 'Nunito-ExtraBold', 
     fontSize: 20, 
     marginBottom: 4,
@@ -258,7 +241,6 @@ const styles = StyleSheet.create({
   actionSubtitle: {
     color: palette.textSecondary,
     fontSize: 14, 
-    // FONT CHANGE: Replaced default/no fontWeight (Assumed Regular)
     fontFamily: 'Nunito-Regular', 
     lineHeight: 18,
   },
