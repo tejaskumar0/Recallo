@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useEffect, useState, useMemo } from "react";
 import { Friend, fetchFriendsbyUser, Event, fetchEventsByUser } from "../../services/api";
-import { colors, spacing, radius, typography } from "../../constants/theme";
+import { useAuth } from "../../contexts/AuthContext";
 
 function WeekCalendar() {
   const today = useMemo(() => new Date(), []);
@@ -64,6 +64,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const { user } = useAuth();
 
   const formatFriendNames = (names: string[] | null) => {
     if (!names || names.length === 0) return "";
@@ -74,25 +75,25 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    const loadEvents = async () => {
-      const data = await fetchEventsByUser(
-        "cf1acd40-f837-4d01-b459-2bce15fe061a"
-      );
-      console.log("EVENTS FROM API:", data);
-      setEvents(data);
-    };
-    loadEvents();
-  }, []);
+    if (!user?.id) return;
 
-  useEffect(() => {
-    const loadFriends = async () => {
-      const data = await fetchFriendsbyUser(
-        "cf1acd40-f837-4d01-b459-2bce15fe061a"
-      );
-      setFriends(data);
+    const load = async () => {
+      try {
+        const userId = user.id;
+        const [eventsData, friendsData] = await Promise.all([
+          fetchEventsByUser(userId),
+          fetchFriendsbyUser(userId),
+        ]);
+        console.log("EVENTS FROM API:", eventsData);
+        setEvents(eventsData);
+        setFriends(friendsData);
+      } catch (err) {
+        console.error("Error loading home data:", err);
+      }
     };
-    loadFriends();
-  }, []);
+
+    load();
+  }, [user?.id]);
 
   return (
     <SafeAreaView style={styles.container}>
