@@ -1,11 +1,15 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchFriendsbyUser, Friend } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { ArrowLeft } from 'lucide-react-native';
 
+// --- CONSTANTS ---
 const palette = {
   background: "#f2efe0ff",
-  card: "#f3f3d0ff",
+  card: "#f3f3d0ff", // Used for cards/grid items
   textPrimary: "#2b2100",
   textSecondary: "#4f4a2e",
   accent: "#fef08a",
@@ -23,7 +27,25 @@ const shadow = {
 const CARD_RADIUS = 18;
 const H_PADDING = 24;
 
-import { useAuth } from '../../contexts/AuthContext';
+type CustomHeaderProps = {
+  router: ReturnType<typeof useRouter>;
+  styles: { [key: string]: any };
+};
+
+const CustomHeader = ({ router, styles }: CustomHeaderProps) => (
+  <View style={styles.header}>
+    <TouchableOpacity 
+      onPress={() => router.back()} 
+      style={styles.backButton}
+    >
+      <ArrowLeft size={24} color="#4A4036" />
+    </TouchableOpacity>
+    <Text style={styles.headerTitle}>People</Text>
+    <View style={{ width: 48 }} />
+  </View>
+);
+// --- End Header Component ---
+
 
 export default function PeopleScreen() {
   const router = useRouter();
@@ -33,8 +55,12 @@ export default function PeopleScreen() {
   useEffect(() => {
     const loadFriends = async () => {
       if (user?.id) {
-        const data = await fetchFriendsbyUser(user.id);
-        setFriends(data);
+        try {
+          const data = await fetchFriendsbyUser(user.id);
+          setFriends(data);
+        } catch (error) {
+          console.error("Error loading friends:", error);
+        }
       }
     };
     loadFriends();
@@ -42,12 +68,15 @@ export default function PeopleScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      
+      {/* Use the isolated header component */}
+      <CustomHeader router={router} styles={styles} />
+      
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerBlock}>
-          <Text style={styles.appTitle}>People</Text>
           <Text style={styles.appSubtitle}>
             Your circle of friends.
           </Text>
@@ -58,7 +87,6 @@ export default function PeopleScreen() {
             <TouchableOpacity 
               key={friend.id} 
               style={styles.card}
-              // This points to app/(stack)/people/[id].tsx
               onPress={() => router.push(`/people/${friend.id}` as any)}
               activeOpacity={0.9}
             >
@@ -72,15 +100,17 @@ export default function PeopleScreen() {
               <Text style={styles.name} numberOfLines={1}>{friend.friend_name}</Text>
               <View style={styles.stats}>
                 <Text style={styles.statText}>{friend.event_count} Events</Text>
-                {friend.last_event_date && (
+                {friend.last_event_date ? (
                   <Text style={styles.statSubtext}>
                     Last: {new Date(friend.last_event_date).toLocaleDateString()}
                   </Text>
-                )}
+                ) : null}
               </View>
             </TouchableOpacity>
           ))}
         </View>
+        
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -91,25 +121,57 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: palette.background,
   },
+  
+  // --- HEADER STYLES (New) ---
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    zIndex: 10,
+    backgroundColor: palette.background, // Match screen background
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#F0EAD6",
+    elevation: 2,
+    shadowColor: "#E8E4D0",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#4A4036", // Use dark brown for visibility
+    letterSpacing: -0.5,
+  },
+  // --- END HEADER STYLES ---
+
   scrollContent: {
     paddingHorizontal: H_PADDING,
     paddingTop: 12,
-    // Add extra padding at bottom so content isn't hidden behind the floating tab bar
     paddingBottom: 100,
   },
   headerBlock: {
     marginBottom: 28,
   },
   appTitle: {
-    fontSize: 34,
-    fontWeight: "800",
-    color: palette.textPrimary,
-    marginBottom: 8,
+    // This title is now redundant with headerTitle, so we just hide it
+    display: 'none', 
   },
   appSubtitle: {
     fontSize: 15,
     color: palette.textSecondary,
     marginBottom: 16,
+    paddingTop: 8, // Adjust spacing
   },
   grid: {
     flexDirection: 'row',
