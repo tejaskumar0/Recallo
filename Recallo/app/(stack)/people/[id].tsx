@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -10,28 +10,36 @@ import {
   View,
 } from "react-native";
 import { Event, fetchEventsByUserAndFriend } from '../../../services/api';
+import { ArrowLeft } from 'lucide-react-native'; // Use Lucide icon for consistency
+import { useAuth } from '../../../contexts/AuthContext';
 
+
+// --- CONSTANTS ---
 const palette = {
   background: "#f2efe0ff",
-  card: "#f3f3d0ff",
+  // UI IMPROVEMENT: Changed card color to pure white for consistency
+  card: "#FFFFFF", 
   textPrimary: "#2b2100",
   textSecondary: "#4f4a2e",
   accent: "#fef08a",
-  border: "rgba(0, 0, 0, 0.05)",
+  // UI IMPROVEMENT: Slightly darker border for better contrast on white cards
+  border: "rgba(0, 0, 0, 0.08)", 
 };
 
 const shadow = {
+  // UI IMPROVEMENT: Consistent shadow definition
   shadowColor: "#000",
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 5,
+  shadowOpacity: 0.1, 
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 4,
 };
 
-const CARD_RADIUS = 18;
+const CARD_RADIUS = 20; // UI IMPROVEMENT: Slightly larger radius
 const H_PADDING = 24;
+// --- END CONSTANTS ---
 
-import { useAuth } from '../../../contexts/AuthContext';
+// NOTE: The getFontFamily helper function has been removed as requested.
 
 export default function PersonEventsScreen() {
   const router = useRouter();
@@ -56,13 +64,16 @@ export default function PersonEventsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        
+        {/* UI IMPROVEMENT: Cleaned up Header Block */}
         <View style={styles.headerRow}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
             activeOpacity={0.8}
           >
-            <Ionicons name="arrow-back" size={24} color={palette.textPrimary} />
+            {/* UI IMPROVEMENT: Using Lucide icon for visual consistency */}
+            <ArrowLeft size={24} color="#4A4036" /> 
           </TouchableOpacity>
 
           <View style={styles.headerTitleContainer}>
@@ -76,9 +87,13 @@ export default function PersonEventsScreen() {
           data={events}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
+          // UI IMPROVEMENT: Tighter spacing between items
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />} 
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No events recorded yet.</Text>
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No events recorded yet.</Text>
+                <Text style={styles.emptySubText}>Start a new conversation with {personName}!</Text>
+            </View>
           }
           renderItem={({ item }) => (
             <TouchableOpacity 
@@ -99,7 +114,7 @@ export default function PersonEventsScreen() {
                   {item.event_date ? new Date(item.event_date).toLocaleDateString() : ''}
                 </Text>
               </View>
-              {/* We can show summary or other details here if available in the future */}
+              {/* Optional: Add a brief summary here if available */}
             </TouchableOpacity>
           )}
         />
@@ -116,16 +131,23 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: H_PADDING,
-    paddingVertical: 16,
+    paddingVertical: 0, 
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16, 
+    paddingTop: 16, 
   },
   backButton: {
-    padding: 8,
-    marginLeft: -8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#F0EAD6",
   },
   headerTitleContainer: {
     flex: 1,
@@ -133,43 +155,67 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: palette.textPrimary,
-    fontSize: 18,
-    fontWeight: "700",
+    // FONT CHANGE: Hardcoded 'Nunito-ExtraBold' (was 800)
+    fontFamily: 'Nunito-ExtraBold', 
+    fontSize: 24, 
   },
   headerSpacer: {
-    width: 40, // Approximate width of back button to balance center title
+    width: 40, 
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: 40, 
   },
   eventCard: {
     backgroundColor: palette.card,
     borderRadius: CARD_RADIUS,
-    padding: 15,
+    padding: 20, 
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: palette.border, 
     ...shadow,
   },
   eventHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 4,
+    marginBottom: 4, 
   },
   eventTitle: {
     color: palette.textPrimary,
-    fontSize: 16,
-    fontWeight: "700",
+    // FONT CHANGE: Hardcoded 'Nunito-Bold' (was 700)
+    fontFamily: 'Nunito-Bold',
+    fontSize: 18, 
     flex: 1,
-    marginRight: 8,
+    marginRight: 10,
   },
   eventDate: {
     color: palette.textSecondary,
-    fontSize: 13,
+    // FONT CHANGE: Hardcoded 'Nunito-Regular'
+    fontFamily: 'Nunito-Regular',
+    fontSize: 13, 
+    paddingTop: 2,
+  },
+  // --- Empty State Styles ---
+  emptyContainer: {
+    padding: 30,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: CARD_RADIUS,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   emptyText: {
+    // FONT CHANGE: Hardcoded 'Nunito-SemiBold' (was 600)
+    fontFamily: 'Nunito-SemiBold', 
+    color: palette.textSecondary,
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  emptySubText: {
+    // FONT CHANGE: Hardcoded 'Nunito-Regular' (was 400)
+    fontFamily: 'Nunito-Regular',
     color: palette.textSecondary,
     fontSize: 14,
     textAlign: "center",
-    marginTop: 20,
   },
 });
