@@ -16,6 +16,13 @@ export interface Event {
   friend_names: string[];
 }
 
+export interface Content {
+  id: string;
+  user_friend_event_id: string;
+  topic: string;
+  content: string;
+}
+
 export const fetchFriendsbyUser = async (userId: string): Promise<Friend[]> => {
   try {
     const response = await fetch(`${API_URL}/friends/user/${userId}`);
@@ -65,6 +72,30 @@ export const fetchEventsByUserAndFriend = async (userId: string, friendId: strin
     return await response.json();
   } catch (error) {
     console.error('Error fetching events:', error);
+    return [];
+  }
+};
+
+export const bulkCreateContent = async (userFriendEventId: number, topics: { topic: string; content: string }[]): Promise<Content[]> => {
+  try {
+    const response = await fetch(`${API_URL}/content/bulk`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_friend_event_id: userFriendEventId,
+        topics: topics,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating bulk content:', error);
     return [];
   }
 };
