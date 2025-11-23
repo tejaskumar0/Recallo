@@ -118,8 +118,6 @@ export default function CaptureScreen() {
     setIsCreating(true);
     try {
       // 1. Create Friend
-      // Note: We include user_id here assuming your 'friends' table has a user_id column.
-      // If your schema strictly uses 'user_friends' table, remove user_id from this body.
       const response = await fetch(FRIENDS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,7 +134,6 @@ export default function CaptureScreen() {
       const newFriend = await response.json();
 
       // 2. Link User to Friend (Relation)
-      // We try this, but don't block if it fails (e.g., if the friend creation above already linked it via trigger or column)
       try {
         await fetch(USER_FRIENDS_URL, {
           method: 'POST',
@@ -183,8 +180,6 @@ export default function CaptureScreen() {
     setIsCreating(true);
     try {
       // 1. Create Event
-      // IMPORTANT: We removed `user_id` from here because your `events` table likely doesn't have it.
-      // It relies on the `user_events` relation table instead.
       const response = await fetch(EVENTS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -295,6 +290,8 @@ export default function CaptureScreen() {
     }
 
     setIsUploading(true);
+    let finalUserFriendEventId = null; // Variable to hold the ID needed for the next screen
+    
     try {
       // 1. UPLOAD AUDIO
       const formData = new FormData();
@@ -325,8 +322,6 @@ export default function CaptureScreen() {
         user_id: CURRENT_USER_ID,
         friend_id: selectedFriend.id,
         event_id: selectedEvent.id,
-        // If your schema requires the generated audio/memory ID, you would add it here 
-        // (e.g., memory_id: result.memory_id). Assuming only U/F/E IDs are needed for now.
       };
       
       console.log("Attempting to create final User-Friend-Event link...");
@@ -340,17 +335,28 @@ export default function CaptureScreen() {
       if (!finalRelationResponse.ok) {
         console.warn("⚠️ Final Relation Link FAILED:", finalRelationResponse.status, await finalRelationResponse.text());
         Alert.alert("Warning", "Memory saved but failed to link all three IDs (check backend logs).");
+        // If linking fails, we can't save the content on the next screen, so we might want to return here.
+        // For now, we continue but finalUserFriendEventId remains null.
       } else {
-        console.log("✅ Final User-Friend-Event Relation Linked!");
+        // --- FIX: Read the response body to get the ID ---
+        const finalRelationData = await finalRelationResponse.json();
+        // Assuming your backend returns the created object with an 'id' property
+        finalUserFriendEventId = finalRelationData.id; 
+        console.log("✅ Final User-Friend-Event Relation Linked! ID:", finalUserFriendEventId);
       }
       
       // 3. NAVIGATE TO REVIEW
+      // --- FIX: Pass the retrieved ID as a string parameter ---
       router.push({
         pathname: "/review" as any,
-        params: { data: JSON.stringify(result) } 
+        params: { 
+            data: JSON.stringify(result),
+            // Pass the ID as a string. If it's null (if step 2 failed), pass an empty string.
+            userFriendEventId: finalUserFriendEventId ? String(finalUserFriendEventId) : '' 
+        } 
       });
 
-      Alert.alert("Success", "Memory analyzed and saved!");
+      Alert.alert("Success", "Memory analyzed and saved! Now review and confirm.");
       
     } catch (error) {
       console.error("Upload Failed:", error);
@@ -372,6 +378,7 @@ export default function CaptureScreen() {
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isRecording) {
+      // Animation logic omitted for brevity, assumed correct.
       startPulse();
       interval = setInterval(() => {
         setDuration((prev) => prev + 1);
@@ -385,20 +392,11 @@ export default function CaptureScreen() {
 
   useEffect(() => {
     const createBlobAnimation = (animValue: Animated.Value, duration: number) => {
+      // Animation logic omitted for brevity, assumed correct.
       return Animated.loop(
         Animated.sequence([
-          Animated.timing(animValue, {
-            toValue: 1,
-            duration: duration,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(animValue, {
-            toValue: 0,
-            duration: duration,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
+          Animated.timing(animValue, { toValue: 1, duration: duration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(animValue, { toValue: 0, duration: duration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
         ])
       );
     };
@@ -408,16 +406,8 @@ export default function CaptureScreen() {
   const startPulse = () => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
+        Animated.timing(pulseAnim, { toValue: 1.2, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
       ])
     ).start();
   };

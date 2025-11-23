@@ -2,6 +2,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, Hash, PenLine, Plus, Trash2 } from "lucide-react-native";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { bulkCreateContent } from "../../services/api"; 
 
 interface MemoryBlock {
   topic: string;
@@ -22,9 +24,16 @@ interface MemoryBlock {
 export default function ReviewScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const [isSaving, setIsSaving] = useState(false);
 
   // --- 1. SMART PARSING ---
-  // We expect structure: { "topics": [ { "topic": "...", "content": "..." } ] }
+  // Expects params: { data: '{"topics": [...]}', userFriendEventId: '123' }
+  
+  // Extract userFriendEventId from params
+  const rawId = params.userFriendEventId;
+  // Parse the ID as an integer. This will be null if the param is missing or invalid.
+  const userFriendEventId = rawId ? parseInt(rawId as string, 10) : null;
+
   let initialBlocks: MemoryBlock[] = [];
 
   try {
@@ -36,7 +45,6 @@ export default function ReviewScreen() {
         content: item.content || "",
       }));
     } else {
-      // Fallback if data is empty or different format
       initialBlocks = [{ topic: "New Memory", content: "" }];
     }
   } catch (e) {
@@ -71,17 +79,43 @@ export default function ReviewScreen() {
   };
 
   // Save everything
-  const handleFinalSave = () => {
-    const finalJSON = {
-      topics: blocks
-    };
+  const handleFinalSave = async () => {
+    if (isSaving) return;
 
-    console.log("------------------------------------------------");
-    console.log("💾 FINAL SAVED DATA:");
-    console.log(JSON.stringify(finalJSON, null, 2));
-    console.log("------------------------------------------------");
+    if (!userFriendEventId) {
+      Alert.alert("Error", "Missing relationship ID. Cannot save content.");
+      console.error("Missing userFriendEventId in params. Did CaptureScreen pass it?");
+      return;
+    }
+    
+    setIsSaving(true);
 
-    router.dismissAll();
+    try {
+      // Filter out empty blocks
+      const contentToSave = blocks.filter(b => b.topic.trim() || b.content.trim());
+      
+      if (contentToSave.length === 0) {
+        Alert.alert("Empty", "No content to save. Add content before saving.");
+        return;
+      }
+      
+      // Call the bulk creation API
+      // NOTE: bulkCreateContent logic includes its own error handling/Alerts
+      const createdContents = await bulkCreateContent(userFriendEventId, contentToSave);
+
+      if (createdContents.length > 0) {
+        Alert.alert("Success", `Saved ${createdContents.length} memory blocks!`);
+        // Navigate back to tabs/home after successful save
+        router.dismissAll(); 
+      }
+      
+    } catch (error) {
+       // Catch errors not handled by bulkCreateContent itself
+       console.error("Final Save Failed:", error);
+       Alert.alert("Save Error", "Failed to confirm and save content.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -92,7 +126,7 @@ export default function ReviewScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} disabled={isSaving}>
             <ArrowLeft size={24} color="#4A4036" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Review Memory</Text>
@@ -116,8 +150,9 @@ export default function ReviewScreen() {
                   onChangeText={(text) => updateBlock(index, 'topic', text)}
                   placeholder="Topic Name..."
                   placeholderTextColor="#D7CCC8"
+                  editable={!isSaving}
                 />
-                <TouchableOpacity onPress={() => deleteBlock(index)} style={styles.deleteButton}>
+                <TouchableOpacity onPress={() => deleteBlock(index)} style={styles.deleteButton} disabled={isSaving}>
                   <Trash2 size={18} color="#D7CCC8" />
                 </TouchableOpacity>
               </View>
@@ -137,13 +172,14 @@ export default function ReviewScreen() {
                   multiline
                   placeholder="Write details here..."
                   placeholderTextColor="#E0E0E0"
+                  editable={!isSaving}
                 />
               </View>
             </View>
           ))}
 
           {/* Add New Section Button */}
-          <TouchableOpacity style={styles.addButton} onPress={addNewBlock}>
+          <TouchableOpacity style={styles.addButton} onPress={addNewBlock} disabled={isSaving}>
             <Plus size={20} color="#8D6E63" />
             <Text style={styles.addButtonText}>Add Another Topic</Text>
           </TouchableOpacity>
@@ -152,11 +188,22 @@ export default function ReviewScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.saveButton} onPress={handleFinalSave} activeOpacity={0.9}>
-            <Text style={styles.saveButtonText}>Confirm & Save</Text>
-            <View style={styles.checkIcon}>
-               <Check size={18} color="#4A4036" strokeWidth={3} />
-            </View>
+          <TouchableOpacity 
+            style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
+            onPress={handleFinalSave} 
+            activeOpacity={0.9}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="#FFF8E1" size="small" />
+            ) : (
+              <>
+                <Text style={styles.saveButtonText}>Confirm & Save</Text>
+                <View style={styles.checkIcon}>
+                  <Check size={18} color="#4A4036" strokeWidth={3} />
+                </View>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
