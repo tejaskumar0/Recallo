@@ -48,8 +48,9 @@ export default function QuizTakingScreen() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submittedQuestions, setSubmittedQuestions] = useState<boolean[]>([]);
   const [score, setScore] = useState(0);
+  const [quizCompleted, setQuizCompleted] = useState(false);
 
   useEffect(() => {
     loadQuiz();
@@ -63,6 +64,7 @@ export default function QuizTakingScreen() {
       const quizData = await generateQuiz(user.id, friendId as string);
       setQuiz(quizData);
       setSelectedAnswers(new Array(quizData.questions.length).fill(null));
+      setSubmittedQuestions(new Array(quizData.questions.length).fill(false));
     } catch (error: any) {
       Alert.alert(
         "Error",
@@ -75,7 +77,7 @@ export default function QuizTakingScreen() {
   };
 
   const handleSelectOption = (optionIndex: number) => {
-    if (submitted) return; // Don't allow changing answers after submission
+    if (submittedQuestions[currentQuestionIndex]) return; // Don't allow changing answers after submission
     
     const newAnswers = [...selectedAnswers];
     newAnswers[currentQuestionIndex] = optionIndex;
@@ -94,41 +96,36 @@ export default function QuizTakingScreen() {
     }
   };
 
-  const handleSubmitQuiz = () => {
-    // Check if all questions are answered
-    const unansweredCount = selectedAnswers.filter(a => a === null).length;
-    if (unansweredCount > 0) {
-      Alert.alert(
-        "Incomplete Quiz",
-        `You have ${unansweredCount} unanswered question${unansweredCount > 1 ? 's' : ''}. Are you sure you want to submit?`,
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Submit Anyway", onPress: submitQuiz }
-        ]
-      );
-    } else {
-      submitQuiz();
+  const handleSubmitCurrentQuestion = () => {
+    if (!quiz) return;
+    
+    if (selectedAnswers[currentQuestionIndex] === null) {
+      Alert.alert("No Answer Selected", "Please select an answer before submitting.");
+      return;
+    }
+    
+    const newSubmitted = [...submittedQuestions];
+    newSubmitted[currentQuestionIndex] = true;
+    setSubmittedQuestions(newSubmitted);
+    
+    // Update score if answer is correct
+    if (selectedAnswers[currentQuestionIndex] === quiz.questions[currentQuestionIndex].correct_answer) {
+      setScore(score + 1);
+    }
+    
+    // Check if this was the last question
+    if (currentQuestionIndex === quiz.questions.length - 1) {
+      // All questions answered, mark quiz as completed
+      setQuizCompleted(true);
     }
   };
 
-  const submitQuiz = () => {
-    if (!quiz) return;
-    
-    let correctCount = 0;
-    quiz.questions.forEach((question, index) => {
-      if (selectedAnswers[index] === question.correct_answer) {
-        correctCount++;
-      }
-    });
-    
-    setScore(correctCount);
-    setSubmitted(true);
+  const handleFinishQuiz = () => {
     setShowResults(true);
-    setCurrentQuestionIndex(0);
   };
 
   const getOptionStyle = (optionIndex: number) => {
-    if (!submitted) {
+    if (!submittedQuestions[currentQuestionIndex]) {
       return selectedAnswers[currentQuestionIndex] === optionIndex
         ? styles.optionSelected
         : styles.optionDefault;
@@ -172,7 +169,7 @@ export default function QuizTakingScreen() {
   const currentQuestion = quiz.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
 
-  if (showResults && submitted) {
+  if (showResults && quizCompleted) {
     const percentage = Math.round((score / quiz.questions.length) * 100);
     
     return (
@@ -215,6 +212,7 @@ export default function QuizTakingScreen() {
             <Text style={styles.reviewTitle}>Review Your Answers</Text>
             {quiz.questions.map((question, index) => {
               const isCorrect = selectedAnswers[index] === question.correct_answer;
+              const wasAnswered = selectedAnswers[index] !== null;
               return (
                 <TouchableOpacity
                   key={index}
@@ -225,7 +223,11 @@ export default function QuizTakingScreen() {
                   }}
                 >
                   <View style={styles.reviewItemHeader}>
-                    {isCorrect ? (
+                    {!wasAnswered ? (
+                      <View style={styles.unansweredIcon}>
+                        <Text style={styles.unansweredIconText}>-</Text>
+                      </View>
+                    ) : isCorrect ? (
                       <CheckCircle size={20} color={palette.success} />
                     ) : (
                       <XCircle size={20} color={palette.error} />
@@ -243,7 +245,8 @@ export default function QuizTakingScreen() {
               style={styles.retakeButton}
               onPress={() => {
                 setSelectedAnswers(new Array(quiz.questions.length).fill(null));
-                setSubmitted(false);
+                setSubmittedQuestions(new Array(quiz.questions.length).fill(false));
+                setQuizCompleted(false);
                 setShowResults(false);
                 setCurrentQuestionIndex(0);
                 setScore(0);
@@ -302,7 +305,7 @@ export default function QuizTakingScreen() {
                   getOptionStyle(index)
                 ]}
                 onPress={() => handleSelectOption(index)}
-                disabled={submitted}
+                disabled={submittedQuestions[currentQuestionIndex]}
               >
                 <View style={styles.optionContent}>
                   <View style={styles.optionLetter}>
@@ -312,10 +315,10 @@ export default function QuizTakingScreen() {
                   </View>
                   <Text style={styles.optionText}>{option}</Text>
                 </View>
-                {submitted && index === currentQuestion.correct_answer && (
+                {submittedQuestions[currentQuestionIndex] && index === currentQuestion.correct_answer && (
                   <CheckCircle size={20} color={palette.success} />
                 )}
-                {submitted && index === selectedAnswers[currentQuestionIndex] && 
+                {submittedQuestions[currentQuestionIndex] && index === selectedAnswers[currentQuestionIndex] && 
                  index !== currentQuestion.correct_answer && (
                   <XCircle size={20} color={palette.error} />
                 )}
@@ -323,7 +326,7 @@ export default function QuizTakingScreen() {
             ))}
           </View>
 
-          {submitted && (
+          {submittedQuestions[currentQuestionIndex] && (
             <View style={styles.explanationContainer}>
               <Text style={styles.explanationTitle}>Explanation:</Text>
               <Text style={styles.explanationText}>{currentQuestion.explanation}</Text>
@@ -349,36 +352,27 @@ export default function QuizTakingScreen() {
             ]}>Previous</Text>
           </TouchableOpacity>
 
-          {!submitted && currentQuestionIndex === quiz.questions.length - 1 ? (
+          {!submittedQuestions[currentQuestionIndex] ? (
             <TouchableOpacity
               style={styles.submitButton}
-              onPress={handleSubmitQuiz}
+              onPress={handleSubmitCurrentQuestion}
             >
-              <Text style={styles.submitButtonText}>Submit Quiz</Text>
+              <Text style={styles.submitButtonText}>Submit Answer</Text>
             </TouchableOpacity>
-          ) : submitted && currentQuestionIndex === quiz.questions.length - 1 ? (
+          ) : quizCompleted ? (
             <TouchableOpacity
               style={styles.viewResultsButton}
-              onPress={() => setShowResults(true)}
+              onPress={handleFinishQuiz}
             >
               <Text style={styles.viewResultsButtonText}>View Results</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[
-                styles.navButton,
-                currentQuestionIndex === quiz.questions.length - 1 && styles.navButtonDisabled
-              ]}
+              style={styles.navButton}
               onPress={handleNext}
-              disabled={currentQuestionIndex === quiz.questions.length - 1}
             >
-              <Text style={[
-                styles.navButtonText,
-                currentQuestionIndex === quiz.questions.length - 1 && styles.navButtonTextDisabled
-              ]}>Next</Text>
-              <ChevronRight size={20} color={
-                currentQuestionIndex === quiz.questions.length - 1 ? palette.textSecondary : palette.textPrimary
-              } />
+              <Text style={styles.navButtonText}>Next Question</Text>
+              <ChevronRight size={20} color={palette.textPrimary} />
             </TouchableOpacity>
           )}
         </View>
@@ -710,5 +704,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Nunito-SemiBold',
     color: palette.textPrimary,
+  },
+  unansweredIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: palette.textSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unansweredIconText: {
+    fontSize: 12,
+    fontFamily: 'Nunito-Bold',
+    color: '#ffffff',
   },
 });

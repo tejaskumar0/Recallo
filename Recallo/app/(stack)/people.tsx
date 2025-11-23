@@ -62,11 +62,13 @@ export default function PeopleScreen() {
         try {
           setLoading(true);
           const data = await fetchFriendsbyUser(user.id);
+          console.log("loading", loading)
           setFriends(data);
         } catch (error) {
           console.error("Error loading friends:", error);
         } finally {
           setLoading(false);
+          console.log("loading", loading)
         }
       }
     };
