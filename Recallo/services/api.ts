@@ -1,4 +1,6 @@
-const API_URL = 'http://127.0.0.1:8000/api/v1';
+// -  const API_URL = 'http://127.0.0.1:8000/api/v1';
+// Replace with your laptop's local IP address (find it with ifconfig on Mac or ipconfig on Windows)
+const API_URL = 'http://172.23.57.4:8000/api/v1'; // Update this IP!
 
 export interface Friend {
   id: string;
