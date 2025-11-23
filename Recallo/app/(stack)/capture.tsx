@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import { useRouter } from "expo-router";
-import { ArrowLeft, Calendar, ChevronDown, Mic, Square, User } from "lucide-react-native";
+import { ArrowLeft, Calendar, ChevronDown, Mic, Plus, Square, User, X } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -8,21 +8,29 @@ import {
   Animated,
   Dimensions,
   Easing,
+  KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Event, fetchEventsByUserAndFriend, fetchFriendsbyUser, Friend } from "../../services/api";
 
 // --- CONFIGURATION ---
-const BACKEND_URL = "http://127.0.0.1:8000/api/v1/process_audio/"; 
-const CURRENT_USER_ID = 'cf1acd40-f837-4d01-b459-2bce15fe061a';
+const API_BASE = "http://127.0.0.1:8000/api/v1";
+const AUDIO_PROCESS_URL = `${API_BASE}/process_audio/`; 
+const FRIENDS_URL = `${API_BASE}/friends/`;
+const EVENTS_URL = `${API_BASE}/events/`;
+const USER_FRIENDS_URL = `${API_BASE}/relations/user-friends/`;
+const USER_EVENTS_URL = `${API_BASE}/relations/user-events/`;
 
-const { width } = Dimensions.get("window");
+const CURRENT_USER_ID = 'cf1acd40-f837-4d01-b459-2bce15fe061a';
 
 export default function CaptureScreen() {
   const router = useRouter();
@@ -46,6 +54,13 @@ export default function CaptureScreen() {
   const [showPersonDropdown, setShowPersonDropdown] = useState(false);
   const [showEventDropdown, setShowEventDropdown] = useState(false);
 
+  // --- Modal State ---
+  const [isFriendModalVisible, setIsFriendModalVisible] = useState(false);
+  const [isEventModalVisible, setIsEventModalVisible] = useState(false);
+  const [newFriendName, setNewFriendName] = useState("");
+  const [newEventName, setNewEventName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
   // --- Animation Values ---
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const blob1Anim = useRef(new Animated.Value(0)).current;
@@ -54,16 +69,17 @@ export default function CaptureScreen() {
   // 1. LOAD FRIENDS
   // ============================================================
   useEffect(() => {
-    const loadFriends = async () => {
-      try {
-        const data = await fetchFriendsbyUser(CURRENT_USER_ID);
-        setFriends(data);
-      } catch (error) {
-        console.error("Error loading friends:", error);
-      }
-    };
     loadFriends();
   }, []);
+
+  const loadFriends = async () => {
+    try {
+      const data = await fetchFriendsbyUser(CURRENT_USER_ID);
+      setFriends(data);
+    } catch (error) {
+      console.error("Error loading friends:", error);
+    }
+  };
 
   // ============================================================
   // 2. LOAD EVENTS (Dependant on Friend Selection)
@@ -72,17 +88,146 @@ export default function CaptureScreen() {
     const loadEvents = async () => {
       if (selectedFriend?.id) {
         try {
-          // Clear previous events first
           setEvents([]); 
           const data = await fetchEventsByUserAndFriend(CURRENT_USER_ID, selectedFriend.id);
           setEvents(data);
         } catch (error) {
           console.error("Error loading events:", error);
         }
+      } else {
+        setEvents([]);
       }
     };
     loadEvents();
-  }, [selectedFriend]); // Triggers when the selected friend object changes
+  }, [selectedFriend]);
+
+
+  // ============================================================
+  // 3. CREATE LOGIC
+  // ============================================================
+
+  const handleCreateFriend = async () => {
+    if (!newFriendName.trim()) {
+      Alert.alert("Required", "Please enter a name.");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      // 1. Create Friend
+      // Note: We include user_id here assuming your 'friends' table has a user_id column.
+      // If your schema strictly uses 'user_friends' table, remove user_id from this body.
+      const response = await fetch(FRIENDS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          friend_name: newFriendName,
+          user_id: CURRENT_USER_ID 
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create friend: ${errorText}`);
+      }
+      const newFriend = await response.json();
+
+      // 2. Link User to Friend (Relation)
+      // We try this, but don't block if it fails (e.g., if the friend creation above already linked it via trigger or column)
+      try {
+        await fetch(USER_FRIENDS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: CURRENT_USER_ID,
+            friend_id: newFriend.id,
+            username: "testuser",
+            friendname: newFriend.friend_name
+          })
+        });
+
+      } catch (relError) {
+        console.log("Relation creation skipped or failed (might be redundant):", relError);
+      }
+      
+      // Refresh list and auto-select
+      await loadFriends();
+      setSelectedFriend(newFriend);
+      setSelectedEvent(null);
+      
+      // Close modal
+      setIsFriendModalVisible(false);
+      setNewFriendName("");
+      
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Could not create friend.");
+      console.error(error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleCreateEvent = async () => {
+    if (!newEventName.trim()) {
+      Alert.alert("Required", "Please enter an event name.");
+      return;
+    }
+    if (!selectedFriend) {
+      Alert.alert("Error", "No friend selected.");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      // 1. Create Event
+      // IMPORTANT: We removed `user_id` from here because your `events` table likely doesn't have it.
+      // It relies on the `user_events` relation table instead.
+      const response = await fetch(EVENTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_name: newEventName,
+          event_date: new Date().toISOString().split('T')[0],
+          friend_id: selectedFriend.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create event: ${errorText}`);
+      }
+      const newEvent = await response.json();
+
+      // 2. Link User to Event (Relation)
+      const relationResponse = await fetch(USER_EVENTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: CURRENT_USER_ID,
+          event_id: newEvent.id
+        })
+      });
+      console.log("User-Event relation response:", relationResponse);
+
+      if (!relationResponse.ok) {
+        console.warn("Failed to create user-event relation, but event was created.");
+      }
+      
+      // Add to local state manually
+      setEvents(prev => [newEvent, ...prev]);
+      setSelectedEvent(newEvent);
+      
+      // Close modal
+      setIsEventModalVisible(false);
+      setNewEventName("");
+      
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Could not create event.");
+      console.error(error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
 
   // --- Audio Recording Logic ---
@@ -159,14 +304,12 @@ export default function CaptureScreen() {
 
       // Use selected object data for remarks
       const friendName = selectedFriend.friend_name;
-      // @ts-ignore - handling generic Event type (check if your API returns .title or .name)
+      // @ts-ignore
       const eventTitle = selectedEvent.title || selectedEvent.event_name || "Unknown Event";
       
       formData.append('remarks', `Context: ${friendName} - ${eventTitle}`);
 
-      console.log("Uploading to:", BACKEND_URL);
-
-      const response = await fetch(BACKEND_URL, {
+      const response = await fetch(AUDIO_PROCESS_URL, {
         method: 'POST',
         body: formData,
         headers: {
@@ -181,12 +324,6 @@ export default function CaptureScreen() {
 
       const result = await response.json();
       
-      console.log("------------------------------------------------");
-      console.log("✅ MEMORY SAVED SUCCESSFULLY");
-      console.log(JSON.stringify(result, null, 2));
-      // ----------------------------------------------------
-      // NAVIGATE TO REVIEW PAGE
-      // ----------------------------------------------------
       router.push({
         pathname: "/review" as any,
         params: { data: JSON.stringify(result) } 
@@ -270,7 +407,6 @@ export default function CaptureScreen() {
     pulseAnim.stopAnimation();
   };
 
-  // Cleanup Fix
   useEffect(() => {
     return () => {
       if (recording) {
@@ -289,6 +425,64 @@ export default function CaptureScreen() {
     inputRange: [0, 1],
     outputRange: [0, -40],
   });
+
+  // --- Render Helpers ---
+
+  const renderCreateModal = (
+    visible: boolean, 
+    onClose: () => void, 
+    title: string, 
+    value: string, 
+    setValue: (text: string) => void,
+    onSubmit: () => void,
+    placeholder: string
+  ) => (
+    <Modal
+      transparent
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.modalOverlay}
+      >
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.modalBackdrop} />
+        </TouchableWithoutFeedback>
+
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{title}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <X size={24} color="#A1887F" />
+            </TouchableOpacity>
+          </View>
+          
+          <TextInput
+            style={styles.modalInput}
+            value={value}
+            onChangeText={setValue}
+            placeholder={placeholder}
+            placeholderTextColor="#D7CCC8"
+            autoFocus
+          />
+
+          <TouchableOpacity 
+            style={[styles.modalButton, isCreating && styles.modalButtonDisabled]}
+            onPress={onSubmit}
+            disabled={isCreating}
+          >
+            {isCreating ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <Text style={styles.modalButtonText}>Create</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -318,28 +512,39 @@ export default function CaptureScreen() {
         <View style={{ width: 48 }} /> 
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         
         {/* --- Context Card --- */}
         <View style={styles.card}>
+          
+          {/* FRIEND SELECTOR */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>WHO IS THIS FOR?</Text>
-            <TouchableOpacity 
-              style={styles.selectorButton}
-              onPress={() => {
-                setShowPersonDropdown(!showPersonDropdown);
-                setShowEventDropdown(false);
-              }}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.iconCircle, { backgroundColor: "#FFECB3" }]}>
-                <User size={20} color="#8D6E63" />
-              </View>
-              <Text style={styles.selectorText}>
-                {selectedFriend ? selectedFriend.friend_name : "Select Friend"}
-              </Text>
-              <ChevronDown size={20} color="#D7CCC8" />
-            </TouchableOpacity>
+            <View style={styles.row}>
+              <TouchableOpacity 
+                style={[styles.selectorButton, { flex: 1 }]}
+                onPress={() => {
+                  setShowPersonDropdown(!showPersonDropdown);
+                  setShowEventDropdown(false);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.iconCircle, { backgroundColor: "#FFECB3" }]}>
+                  <User size={20} color="#8D6E63" />
+                </View>
+                <Text style={styles.selectorText} numberOfLines={1}>
+                  {selectedFriend ? selectedFriend.friend_name : "Select Friend"}
+                </Text>
+                <ChevronDown size={20} color="#D7CCC8" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.addButton}
+                onPress={() => setIsFriendModalVisible(true)}
+              >
+                <Plus size={24} color="#4A4036" />
+              </TouchableOpacity>
+            </View>
 
             {showPersonDropdown && (
               <View style={styles.dropdown}>
@@ -354,7 +559,7 @@ export default function CaptureScreen() {
                       style={styles.dropdownItem}
                       onPress={() => {
                         setSelectedFriend(friend);
-                        setSelectedEvent(null); // Reset event when friend changes
+                        setSelectedEvent(null); 
                         setShowPersonDropdown(false);
                       }}
                     >
@@ -368,29 +573,40 @@ export default function CaptureScreen() {
 
           <View style={{ height: 24 }} />
 
+          {/* EVENT SELECTOR */}
           <View style={[styles.inputGroup, { zIndex: -1 }]}>
             <Text style={styles.label}>WHAT&apos;S HAPPENING?</Text>
-            <TouchableOpacity 
-              style={styles.selectorButton}
-              onPress={() => {
-                if (!selectedFriend) {
-                  Alert.alert("Please select a friend first");
-                  return;
-                }
-                setShowEventDropdown(!showEventDropdown);
-                setShowPersonDropdown(false);
-              }}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.iconCircle, { backgroundColor: "#DCEDC8" }]}>
-                <Calendar size={20} color="#558B2F" />
-              </View>
-              <Text style={styles.selectorText}>
-                 {/* @ts-ignore - handling title or name */}
-                {selectedEvent ? (selectedEvent.title || selectedEvent.event_name) : "Select Event"}
-              </Text>
-              <ChevronDown size={20} color="#D7CCC8" />
-            </TouchableOpacity>
+            <View style={styles.row}>
+              <TouchableOpacity 
+                style={[styles.selectorButton, { flex: 1 }]}
+                onPress={() => {
+                  if (!selectedFriend) {
+                    Alert.alert("Please select a friend first");
+                    return;
+                  }
+                  setShowEventDropdown(!showEventDropdown);
+                  setShowPersonDropdown(false);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.iconCircle, { backgroundColor: "#DCEDC8" }]}>
+                  <Calendar size={20} color="#558B2F" />
+                </View>
+                <Text style={styles.selectorText} numberOfLines={1}>
+                  {/* @ts-ignore */}
+                  {selectedEvent ? (selectedEvent.title || selectedEvent.event_name) : "Select Event"}
+                </Text>
+                <ChevronDown size={20} color="#D7CCC8" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.addButton, !selectedFriend && styles.addButtonDisabled]}
+                disabled={!selectedFriend}
+                onPress={() => setIsEventModalVisible(true)}
+              >
+                <Plus size={24} color={!selectedFriend ? "#D7CCC8" : "#4A4036"} />
+              </TouchableOpacity>
+            </View>
 
             {showEventDropdown && (
               <View style={styles.dropdown}>
@@ -410,7 +626,7 @@ export default function CaptureScreen() {
                         setShowEventDropdown(false);
                       }}
                     >
-                      {/* @ts-ignore - handling title or name */}
+                      {/* @ts-ignore */}
                       <Text style={styles.dropdownText}>{event.event_name}</Text>
                     </TouchableOpacity>
                   ))
@@ -468,10 +684,38 @@ export default function CaptureScreen() {
 
       {/* --- Footer --- */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.saveButton} activeOpacity={0.9}>
+        <TouchableOpacity 
+          style={styles.saveButton} 
+          activeOpacity={0.9}
+          onPress={() => {
+            if (recording) stopRecording();
+            else Alert.alert("Record something first!");
+          }}
+        >
           <Text style={styles.saveButtonText}>Save Memory</Text>
         </TouchableOpacity>
       </View>
+
+      {/* --- Modals --- */}
+      {renderCreateModal(
+        isFriendModalVisible,
+        () => setIsFriendModalVisible(false),
+        "New Friend",
+        newFriendName,
+        setNewFriendName,
+        handleCreateFriend,
+        "Enter friend's name"
+      )}
+
+      {renderCreateModal(
+        isEventModalVisible,
+        () => setIsEventModalVisible(false),
+        "New Event",
+        newEventName,
+        setNewEventName,
+        handleCreateEvent,
+        "Enter event name (e.g. Lunch)"
+      )}
 
     </SafeAreaView>
   );
@@ -549,6 +793,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingLeft: 4,
   },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   selectorButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -558,6 +807,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#F0EAD6",
     paddingHorizontal: 16,
+  },
+  addButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: "#FFFDF5",
+    borderWidth: 2,
+    borderColor: "#F0EAD6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: "#F5F5F5",
   },
   iconCircle: {
     width: 40,
@@ -668,5 +931,67 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     letterSpacing: 0.5,
+  },
+  
+  // --- Modal Styles ---
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
+    padding: 20,
+  },
+  modalBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  modalContent: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#4A4036",
+  },
+  modalInput: {
+    backgroundColor: "#FFFDF5",
+    borderWidth: 2,
+    borderColor: "#F0EAD6",
+    borderRadius: 16,
+    padding: 16,
+    fontSize: 16,
+    color: "#4A4036",
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: "#4A4036",
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  modalButtonDisabled: {
+    opacity: 0.7,
+  },
+  modalButtonText: {
+    color: "#FFF8E1",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

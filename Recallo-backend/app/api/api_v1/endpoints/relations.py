@@ -3,13 +3,24 @@ from typing import List
 
 from app import schemas
 from app.core.supabase import supabase
+from uuid import UUID
 
 router = APIRouter()
 
 # User Friends
 @router.post("/user-friends/", response_model=schemas.UserFriend)
 def create_user_friend(relation: schemas.UserFriendCreate):
-    response = supabase.table("user_friends").insert(relation.model_dump()).execute()
+    # Convert Pydantic model to a dictionary
+    relation_data = relation.model_dump()
+    
+    # Check and convert UUID objects to strings for JSON serialization
+    for key, value in relation_data.items():
+        if isinstance(value, UUID):
+            relation_data[key] = str(value)
+            
+    # Now insert the dictionary with string UUIDs
+    response = supabase.table("user_friends").insert(relation_data).execute()
+    
     if not response.data:
         raise HTTPException(status_code=400, detail="Relation could not be created")
     return response.data[0]
@@ -22,7 +33,17 @@ def read_user_friends(skip: int = 0, limit: int = 100):
 # User Events
 @router.post("/user-events/", response_model=schemas.UserEvent)
 def create_user_event(relation: schemas.UserEventCreate):
-    response = supabase.table("user_events").insert(relation.model_dump()).execute()
+
+    # Convert Pydantic model to a dictionary
+    relation_data = relation.model_dump()
+    
+    # Check and convert UUID objects to strings for JSON serialization
+    for key, value in relation_data.items():
+        if isinstance(value, UUID):
+            relation_data[key] = str(value)
+            
+    # Now insert the dictionary with string UUIDs
+    response = supabase.table("user_events").insert(relation_data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Relation could not be created")
     return response.data[0]
