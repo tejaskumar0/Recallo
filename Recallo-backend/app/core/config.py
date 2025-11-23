@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Recallo Backend"
@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     
     SUPABASE_URL: str
     SUPABASE_KEY: str
+    DEEPGRAM_API_KEY: Optional[str] = None
+    ANTHROPIC_API_KEY: Optional[str] = None
 
     model_config = {"case_sensitive": True, "env_file": ".env"}
 

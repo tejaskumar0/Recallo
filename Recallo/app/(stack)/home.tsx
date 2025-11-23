@@ -1,0 +1,270 @@
+import { Link, useRouter } from "expo-router";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Animated,
+  Easing,
+} from "react-native";
+import { useEffect, useState, useRef } from "react";
+import { Friend, fetchFriendsbyUser, Event, fetchEventsByUser } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
+import { Mic, Users, CalendarDays, Brain } from "lucide-react-native";
+
+// --- CONSTANT DECLARATIONS ---
+const palette = {
+  background: "#f2efe0ff",
+  card: "#FFFFFF",
+  textPrimary: "#2b2100", // Dark Brown
+  textSecondary: "#6b623f", // Medium Brown
+  accent: "#fef08a",
+  border: "rgba(0, 0, 0, 0.08)",
+};
+
+const shadow = {
+  shadowColor: "#000",
+  shadowOpacity: 0.1,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 4,
+};
+
+const CARD_RADIUS = 24;
+const H_PADDING = 24;
+// --- END CONSTANTS ---
+
+// --- Custom Components for Invitation (RecordFAB) ---
+
+const fabPalette = {
+  button: "#FFD54F", // Yellow/Gold
+  mic: "#5D4037", // Brown text/icon
+  // pulse: "#FFAB91", // Removed: Pulse color no longer needed
+};
+
+/**
+ * Mic Button with a label, without the pulsating ring.
+ */
+function RecordFAB({ router }: { router: any }) {
+  // ** UI IMPROVEMENT: Removed pulseAnim and useEffect for animation as the ring is gone. **
+  // const pulseAnim = useRef(new Animated.Value(1)).current;
+  // useEffect(() => { /* animation logic removed */ }, [pulseAnim]);
+
+  return (
+    // Container adjusted slightly since the pulse ring's top alignment is no longer relevant
+    <View style={fabStyles.container}> 
+      {/* ** UI IMPROVEMENT: Removed Animated.View for the pulse ring. **
+      <Animated.View style={[fabStyles.pulseRing, { transform: [{ scale: pulseAnim }] }]} /> */}
+
+      <TouchableOpacity
+        style={fabStyles.micButton}
+        activeOpacity={0.8}
+        onPress={() => router.push("/capture")}
+      >
+        <Mic color={fabPalette.mic} size={36} strokeWidth={2.5} />
+      </TouchableOpacity>
+
+      <Text style={fabStyles.labelText}>
+        Start Capture
+      </Text>
+    </View>
+  );
+}
+
+const fabStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center", // Center items vertically now that only button and text are present
+    left: "50%",
+    bottom: 30,
+    transform: [{ translateX: -60 }],
+    width: 120, 
+    height: 140, // Height is still good for button + text
+  },
+  // pulseRing: { ... }, 
+  micButton: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: fabPalette.button,
+    alignItems: "center",
+    justifyContent: "center",
+    ...shadow,
+  },
+  labelText: {
+    marginTop: 8,
+    fontSize: 14,
+    // FONT CHANGE: Replaced fontWeight: "700"
+    fontFamily: 'Nunito-Bold', 
+    color: palette.textPrimary,
+    textAlign: 'center',
+  },
+});
+
+// --- Main Screen ---
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { user } = useAuth();
+  
+  const [events, setEvents] = useState<Event[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const load = async () => {
+      try {
+        const userId = user.id;
+        const [eventsData, friendsData] = await Promise.all([
+          fetchEventsByUser(userId),
+          fetchFriendsbyUser(userId),
+        ]);
+        setEvents(eventsData);
+        setFriends(friendsData);
+      } catch (err) {
+        console.error("Error loading home data:", err);
+      }
+    };
+
+    load();
+  }, [user?.id]);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.headerBlock}>
+          <Text style={styles.welcomeText}>Welcome Back!</Text> 
+          <Text style={styles.appTitle}>Recallo</Text> 
+          <Text style={styles.appSubtitle}>
+            Capture conversations. Remember the important bits.
+          </Text>
+        </View>
+
+        <View style={styles.actionContainer}>
+          
+          <Link href="/people" asChild>
+            <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}> 
+              <Users size={30} color={palette.textPrimary} style={styles.actionIcon} />
+              <View style={styles.actionTextContainer}>
+                <Text style={styles.actionTitle}>View Friends ({friends.length})</Text> 
+                <Text style={styles.actionSubtitle}>See profiles, pets, and key relationships.</Text> 
+              </View>
+            </TouchableOpacity>
+          </Link>
+
+          <Link href="/events" asChild>
+            <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}>
+              <CalendarDays size={30} color={palette.textPrimary} style={styles.actionIcon} />
+              <View style={styles.actionTextContainer}>
+                <Text style={styles.actionTitle}>Browse by Events ({events.length})</Text>
+                <Text style={styles.actionSubtitle}>Timeline of memories, meetings, and activities.</Text>
+              </View>
+            </TouchableOpacity>
+          </Link>
+
+          <Link href="/quiz" asChild>
+            <TouchableOpacity style={styles.actionBlock} activeOpacity={0.8}>
+              <Brain size={30} color={palette.textPrimary} style={styles.actionIcon} />
+              <View style={styles.actionTextContainer}>
+                  <Text style={styles.actionTitle}>Take a Quiz</Text>
+                  <Text style={styles.actionSubtitle}>Test your memory on recent conversations.</Text>
+              </View>
+            </TouchableOpacity>
+          </Link>
+
+        </View>
+
+        <View style={{ height: 120 }} />
+
+      </ScrollView>
+
+      <RecordFAB router={router} />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: palette.background,
+  },
+  scrollContent: {
+    paddingHorizontal: H_PADDING,
+    paddingTop: 12,
+    paddingBottom: 120, 
+  },
+  headerBlock: {
+    marginBottom: 50, 
+    paddingTop: 8,
+  },
+  welcomeText: {
+    fontSize: 14, 
+    // FONT CHANGE: Replaced fontWeight: "600"
+    fontFamily: 'Nunito-SemiBold', 
+    color: palette.textSecondary,
+    marginBottom: 4,
+  },
+  appTitle: {
+    fontSize: 44, 
+    // FONT CHANGE: Replaced fontWeight: "900"
+    fontFamily: 'Nunito-ExtraBold', 
+    color: palette.textPrimary,
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  appSubtitle: {
+    fontSize: 15, 
+    // FONT CHANGE: Replaced default/no fontWeight (Assumed Regular)
+    fontFamily: 'Nunito-Regular', 
+    color: palette.textSecondary,
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  
+  actionContainer: {
+    gap: 16,
+  },
+  actionBlock: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: palette.card,
+    borderRadius: CARD_RADIUS,
+    padding: 18, 
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+    ...shadow,
+  },
+  actionIcon: {
+    marginRight: 16,
+    opacity: 0.85,
+  },
+  actionTextContainer: {
+    flex: 1,
+  },
+  actionTitle: {
+    color: palette.textPrimary,
+    // FONT CHANGE: Replaced fontWeight: "800"
+    fontFamily: 'Nunito-ExtraBold', 
+    fontSize: 20, 
+    marginBottom: 4,
+  },
+  actionSubtitle: {
+    color: palette.textSecondary,
+    fontSize: 14, 
+    // FONT CHANGE: Replaced default/no fontWeight (Assumed Regular)
+    fontFamily: 'Nunito-Regular', 
+    lineHeight: 18,
+  },
+  
+  calendarRow: { display: "none" },
+  navRow: { display: "none" },
+  section: { display: "none" },
+  fab: { display: "none" }, 
+});
